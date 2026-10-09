@@ -17,7 +17,12 @@ import {
   AlertTriangle,
   Monitor,
   Disc,
-  Info
+  Info,
+  Split,
+  FolderOpen,
+  Camera,
+  PlaySquare,
+  ShieldCheck
 } from 'lucide-react';
 import { LiveQualityConfig, RecordQualityConfig } from '../types';
 
@@ -66,6 +71,30 @@ export const VideoQualityTab: React.FC<VideoQualityTabProps> = ({
   const [appliedNotification, setAppliedNotification] = useState<string | null>(null);
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [recordingFolder, setRecordingFolder] = useState('D:/Transmissoes/Gravacoes_OBS');
+
+  // Hardware / GPU Acceleration State
+  const [useGpuAcceleration, setUseGpuAcceleration] = useState<boolean>(true);
+  const [selectedGpuEncoder, setSelectedGpuEncoder] = useState<'nvenc' | 'amf' | 'qsv' | 'videotoolbox' | 'cpu_x264'>('nvenc');
+  const [gpuIndex, setGpuIndex] = useState<number>(0);
+  const [twoPassMode, setTwoPassMode] = useState<'disabled' | 'quarter' | 'full'>('full');
+  const [lookaheadEnabled, setLookaheadEnabled] = useState<boolean>(true);
+  const [psychoVisualTuning, setPsychoVisualTuning] = useState<boolean>(true);
+
+  // AutoSplitter State
+  const [autoSplitterEnabled, setAutoSplitterEnabled] = useState<boolean>(true);
+  const [autoSplitType, setAutoSplitType] = useState<'time' | 'size'>('time');
+  const [autoSplitTimeMinutes, setAutoSplitTimeMinutes] = useState<number>(30);
+  const [autoSplitSizeGb, setAutoSplitSizeGb] = useState<number>(2);
+
+  // Open Last Recording State
+  const [openLastRecordingEnabled, setOpenLastRecordingEnabled] = useState<boolean>(true);
+
+  // Source Record State
+  const [sourceRecordSources, setSourceRecordSources] = useState<Array<{ id: string; name: string; enabled: boolean; format: string; isolated: boolean }>>([
+    { id: 'cam-clean', name: 'Webcam Principal (Sinal Limpo Sem GC)', enabled: true, format: 'MKV / NVENC', isolated: true },
+    { id: 'game-clean', name: 'Tela do Jogo / Apresentação Limpa', enabled: true, format: 'MKV / NVENC', isolated: true },
+    { id: 'vdo-guest', name: 'Convidado VDO.Ninja Isolado', enabled: false, format: 'MKV / NVENC', isolated: true },
+  ]);
 
   const triggerNotification = (msg: string) => {
     setAppliedNotification(msg);
@@ -849,7 +878,287 @@ export const VideoQualityTab: React.FC<VideoQualityTabProps> = ({
 
       </div>
 
-      {/* Comparison Reference Card */}
+      {/* ===================== NOVOS RECURSOS DE GRAVAÇÃO E HARDWARE ===================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* 1. ACELERAÇÃO DE HARDWARE / GPU */}
+        <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
+                <Cpu className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Aceleração de Hardware / GPU</h3>
+                <span className="text-[11px] text-slate-500">Renderização e codificação offload na placa de vídeo</span>
+              </div>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useGpuAcceleration}
+                onChange={(e) => {
+                  setUseGpuAcceleration(e.target.checked);
+                  triggerNotification(e.target.checked ? '⚡ Aceleração por Hardware/GPU ATIVADA!' : '⚠️ Codificação por Software (CPU) ativada.');
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">
+                Motor de Codificação por Hardware
+              </label>
+              <select
+                disabled={!useGpuAcceleration}
+                value={selectedGpuEncoder}
+                onChange={(e) => setSelectedGpuEncoder(e.target.value as any)}
+                className="w-full border border-slate-300 rounded-lg p-2.5 bg-slate-50 text-slate-900 font-medium disabled:opacity-50"
+              >
+                <option value="nvenc">NVIDIA NVENC (GeForce GTX / RTX - H.264, HEVC e AV1)</option>
+                <option value="amf">AMD AMF / VCE (Radeon RX 6000 / 7000 Series)</option>
+                <option value="qsv">Intel QuickSync Video (QSV - Arc Graphics / Core i5/i7/i9)</option>
+                <option value="videotoolbox">Apple VideoToolbox (Hardware M1 / M2 / M3 Apple Silicon)</option>
+                <option value="cpu_x264">Software CPU (x264 Tradicional - Sem GPU)</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Passagens de Codificação</label>
+                <select
+                  disabled={!useGpuAcceleration}
+                  value={twoPassMode}
+                  onChange={(e) => setTwoPassMode(e.target.value as any)}
+                  className="w-full border border-slate-300 rounded-lg p-2 bg-slate-50 disabled:opacity-50"
+                >
+                  <option value="full">Duas Passagens (Resolução Completa)</option>
+                  <option value="quarter">Duas Passagens (1/4 Resolução - Equilibrado)</option>
+                  <option value="disabled">Uma Passagem (Menor Uso de GPU)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">GPU Selecionada</label>
+                <select
+                  disabled={!useGpuAcceleration}
+                  value={gpuIndex}
+                  onChange={(e) => setGpuIndex(Number(e.target.value))}
+                  className="w-full border border-slate-300 rounded-lg p-2 bg-slate-50 disabled:opacity-50"
+                >
+                  <option value={0}>GPU 0 (Placa de Vídeo Principal)</option>
+                  <option value={1}>GPU 1 (Placa Secundária Dedicada)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+              <label className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={lookaheadEnabled}
+                  onChange={(e) => setLookaheadEnabled(e.target.checked)}
+                  disabled={!useGpuAcceleration}
+                  className="rounded text-emerald-600"
+                />
+                <span className="font-medium text-slate-700">Lookahead (Frames B)</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={psychoVisualTuning}
+                  onChange={(e) => setPsychoVisualTuning(e.target.checked)}
+                  disabled={!useGpuAcceleration}
+                  className="rounded text-emerald-600"
+                />
+                <span className="font-medium text-slate-700">Psycho Visual Tuning</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. AUTOSPLITTER & OPEN LAST RECORDING */}
+        <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
+                <Split className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">AutoSplitter & Gerenciamento de Arquivos</h3>
+                <span className="text-[11px] text-slate-500">Divide automaticamente gravações e abre pastas no Windows</span>
+              </div>
+            </div>
+
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${autoSplitterEnabled ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
+              {autoSplitterEnabled ? 'AutoSplit ATIVO' : 'Desativado'}
+            </span>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            {/* AutoSplitter settings */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Split className="w-4 h-4 text-indigo-600" />
+                  <span className="font-bold text-slate-800">AutoSplitter: Divisão Automática de Gravações</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSplitterEnabled}
+                  onChange={(e) => setAutoSplitterEnabled(e.target.checked)}
+                  className="rounded text-indigo-600"
+                />
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Divide automaticamente os arquivos de gravação em intervalos de tempo definidos ou limite de tamanho, sem perda de quadros.
+              </p>
+
+              {autoSplitterEnabled && (
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Critério de Divisão</label>
+                    <select
+                      value={autoSplitType}
+                      onChange={(e) => setAutoSplitType(e.target.value as any)}
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs"
+                    >
+                      <option value="time">Por Tempo Decorrido</option>
+                      <option value="size">Por Tamanho de Arquivo</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">
+                      {autoSplitType === 'time' ? 'Intervalo de Corte' : 'Tamanho Máximo'}
+                    </label>
+                    {autoSplitType === 'time' ? (
+                      <select
+                        value={autoSplitTimeMinutes}
+                        onChange={(e) => setAutoSplitTimeMinutes(Number(e.target.value))}
+                        className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs"
+                      >
+                        <option value={15}>A cada 15 Minutos (Ideal YouTube)</option>
+                        <option value={30}>A cada 30 Minutos (Padrão)</option>
+                        <option value={60}>A cada 60 Minutos (1 Hora)</option>
+                        <option value={120}>A cada 120 Minutos (2 Horas)</option>
+                      </select>
+                    ) : (
+                      <select
+                        value={autoSplitSizeGb}
+                        onChange={(e) => setAutoSplitSizeGb(Number(e.target.value))}
+                        className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs"
+                      >
+                        <option value={1}>A cada 1 GB</option>
+                        <option value={2}>A cada 2 GB</option>
+                        <option value={4}>A cada 4 GB (FAT32/USB)</option>
+                        <option value={8}>A cada 8 GB</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Open Last Recording Feature */}
+            <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-amber-700" />
+                  <span className="font-bold text-amber-900">Open Last Recording (Abertura Automática)</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={openLastRecordingEnabled}
+                  onChange={(e) => {
+                    setOpenLastRecordingEnabled(e.target.checked);
+                    triggerNotification(e.target.checked ? '📂 Open Last Recording ATIVADO!' : 'Open Last Recording desativado.');
+                  }}
+                  className="rounded text-amber-600"
+                />
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Abre automaticamente a pasta de arquivos do Windows logo após você interromper uma gravação no OBS Studio.
+              </p>
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[10px] font-mono text-slate-600 truncate max-w-[200px]">
+                  Pasta: {recordingFolder}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => triggerNotification(`📂 Abrindo pasta de arquivos do Windows: ${recordingFolder}`)}
+                  className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold flex items-center gap-1 transition"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  <span>Testar Abertura</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* 3. SOURCE RECORD: GRAVAÇÃO ISOLADA DE FONTES LIMPAS (CLEAN FEED) */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-xs border border-slate-200 p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-lg bg-purple-100 text-purple-700">
+                <Camera className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Source Record (Gravação Isolada de Fontes)</h3>
+                <span className="text-[11px] text-slate-500">
+                  Grava individualmente e de forma isolada fontes específicas (como só a sua câmera ou só o jogo) de maneira limpa, sem alertas ou overlays.
+                </span>
+              </div>
+            </div>
+
+            <span className="text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1 rounded-full">
+              Sinais Limpos Independentes (ISO)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {sourceRecordSources.map((srcItem) => (
+              <div
+                key={srcItem.id}
+                className={`p-3.5 rounded-xl border transition ${
+                  srcItem.enabled
+                    ? 'bg-purple-50/40 border-purple-300 ring-1 ring-purple-200'
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-xs text-slate-900">{srcItem.name}</span>
+                  <input
+                    type="checkbox"
+                    checked={srcItem.enabled}
+                    onChange={(e) => {
+                      const updated = sourceRecordSources.map((s) => s.id === srcItem.id ? { ...s, enabled: e.target.checked } : s);
+                      setSourceRecordSources(updated);
+                      triggerNotification(e.target.checked ? `⏺ Source Record ativado para "${srcItem.name}"` : `⏹ Source Record desativado para "${srcItem.name}"`);
+                    }}
+                    className="rounded text-purple-600"
+                  />
+                </div>
+                <div className="text-[11px] text-slate-500 space-y-1">
+                  <p>• Formato: <strong>{srcItem.format}</strong></p>
+                  <p>• Sem letreiros, chats ou notificações da live</p>
+                  <p>• Arquivo independente salvo em <code>/Clean_Feeds/</code></p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+
       <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
         <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Info className="w-4 h-4 text-blue-600" />

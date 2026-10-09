@@ -1,9 +1,12 @@
 export type ConnectionMode = 'direct' | 'simulation';
 
+export type SoftwareType = 'obs' | 'vmix' | 'streamlabs' | 'prism' | 'wirecast' | 'meld' | 'streamerbot';
+
 export interface StudioProfile {
   id: string;
   name: string;
   mode: ConnectionMode;
+  softwareType?: SoftwareType;
   host: string;
   port: number;
   password: string;
@@ -15,6 +18,7 @@ export interface StudioProfile {
 
 export interface OBSConnectionConfig {
   mode: ConnectionMode;
+  softwareType?: SoftwareType;
   activeProfileId: string;
   host: string;
   port: number;
@@ -101,6 +105,12 @@ export type TextEffectType =
   | 'impact_news' 
   | 'cyber_glitch' 
   | 'shadow_3d' 
+  | '3d_chrome'
+  | '3d_gold'
+  | '3d_arcade'
+  | '3d_comic'
+  | '3d_cinema'
+  | '3d_neon_isometric'
   | 'typewriter' 
   | 'strobe';
 

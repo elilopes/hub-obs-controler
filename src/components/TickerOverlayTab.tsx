@@ -229,9 +229,68 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
     { id: 'gradient_gold', label: 'Gradiente Ouro', desc: 'Brilho nobre metálico', icon: <Crown className="w-3.5 h-3.5 text-amber-500" /> },
     { id: 'impact_news', label: 'Plantão Impacto', desc: 'Caixa alta de telejornal', icon: <Tv className="w-3.5 h-3.5 text-red-500" /> },
     { id: 'cyber_glitch', label: 'Cyber Glitch', desc: 'Efeito tech offset RGB', icon: <Cpu className="w-3.5 h-3.5 text-purple-500" /> },
-    { id: 'shadow_3d', label: 'Relevo 3D', desc: 'Sombra volumétrica profunda', icon: <Layers className="w-3.5 h-3.5 text-blue-500" /> },
+    { id: 'shadow_3d', label: 'Relevo 3D Clássico', desc: 'Sombra volumétrica profunda', icon: <Layers className="w-3.5 h-3.5 text-blue-500" /> },
+    { id: '3d_chrome', label: '3D Cromado', desc: 'Metal espelhado extrudado', icon: <Sparkles className="w-3.5 h-3.5 text-slate-400" /> },
+    { id: '3d_gold', label: '3D Ouro Maciço', desc: 'Relevo imperial chanfrado', icon: <Crown className="w-3.5 h-3.5 text-yellow-500" /> },
+    { id: '3d_arcade', label: '3D Synthwave 80s', desc: 'Arco retrô ciano e magenta', icon: <Gamepad2 className="w-3.5 h-3.5 text-pink-500" /> },
+    { id: '3d_comic', label: '3D Pop Comic HQ', desc: 'Borda preta e relevo gibi', icon: <Flame className="w-3.5 h-3.5 text-amber-500" /> },
+    { id: '3d_cinema', label: '3D Cinema Epic', desc: 'Extrusão de trailer de filme', icon: <Tv className="w-3.5 h-3.5 text-indigo-500" /> },
+    { id: '3d_neon_isometric', label: '3D Neon Flutuante', desc: 'Luz isométrica suspensa', icon: <Zap className="w-3.5 h-3.5 text-sky-400" /> },
     { id: 'typewriter', label: 'Terminal / Mono', desc: 'Estilo console digital', icon: <Radio className="w-3.5 h-3.5 text-emerald-500" /> },
-    { id: 'strobe', label: 'Strobe Flash', desc: 'Piscar de emergência rápida', icon: <Zap className="w-3.5 h-3.5 text-yellow-500" /> },
+    { id: 'strobe', label: 'Strobe Flash', desc: 'Piscar estroboscópico rápido', icon: <Zap className="w-3.5 h-3.5 text-yellow-500" /> },
+  ];
+
+  // Galeria de Efeitos 3D Pré-formatados com Alta Fidelidade
+  const effects3DList: { id: TextEffectType; title: string; subtitle: string; previewText: string; previewClass: string }[] = [
+    {
+      id: 'shadow_3d',
+      title: 'Relevo 3D Clássico',
+      subtitle: 'Multicamadas escuras chanfradas',
+      previewText: '3D SHADOW',
+      previewClass: 'text-3d-shadow font-black text-slate-100',
+    },
+    {
+      id: '3d_chrome',
+      title: '3D Metálico Cromado',
+      subtitle: 'Gradiente de prata com reflexos',
+      previewText: 'CHROME 3D',
+      previewClass: 'text-3d-chrome font-black',
+    },
+    {
+      id: '3d_gold',
+      title: '3D Ouro Imperial',
+      subtitle: 'Chanfro dourado volumétrico',
+      previewText: 'GOLD 3D',
+      previewClass: 'text-3d-gold font-black',
+    },
+    {
+      id: '3d_arcade',
+      title: '3D Synthwave Retro',
+      subtitle: 'Ciano e magenta neon anos 80',
+      previewText: '80s RETRO',
+      previewClass: 'text-3d-arcade font-extrabold',
+    },
+    {
+      id: '3d_comic',
+      title: '3D Pop Comic HQ',
+      subtitle: 'Traço preto com relevo de gibi',
+      previewText: 'POP COMIC',
+      previewClass: 'text-3d-comic font-black',
+    },
+    {
+      id: '3d_cinema',
+      title: '3D Blockbuster Cinema',
+      subtitle: 'Profundidade monumental de trailer',
+      previewText: 'BLOCKBUSTER',
+      previewClass: 'text-3d-cinema font-black uppercase',
+    },
+    {
+      id: '3d_neon_isometric',
+      title: '3D Neon Isométrico',
+      subtitle: 'Projeção de luz suspensa em 45°',
+      previewText: 'ISO NEON',
+      previewClass: 'text-3d-neon-isometric font-extrabold',
+    },
   ];
 
   const boxEffectsList: { id: BoxEffectType; label: string; desc: string }[] = [
@@ -308,10 +367,22 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
         return 'text-glitch font-mono font-bold';
       case 'shadow_3d':
         return 'text-3d-shadow font-extrabold';
+      case '3d_chrome':
+        return 'text-3d-chrome font-black tracking-wider';
+      case '3d_gold':
+        return 'text-3d-gold font-black tracking-wide';
+      case '3d_arcade':
+        return 'text-3d-arcade font-extrabold tracking-wider';
+      case '3d_comic':
+        return 'text-3d-comic font-black tracking-wide';
+      case '3d_cinema':
+        return 'text-3d-cinema font-black uppercase tracking-widest';
+      case '3d_neon_isometric':
+        return 'text-3d-neon-isometric font-extrabold tracking-wide';
       case 'typewriter':
         return 'font-mono tracking-tight font-semibold';
       case 'strobe':
-        return 'animate-strobe font-extrabold';
+        return 'font-extrabold tracking-wider';
       default:
         return 'font-bold';
     }
@@ -469,7 +540,7 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="sm:col-span-1">
                   <label className="block font-semibold text-xs text-slate-700 mb-1">
-                    Etiqueta / Badge
+                    Digite o texto da etiqueta / badge
                   </label>
                   <input
                     type="text"
@@ -496,6 +567,57 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
                     placeholder="Digite a mensagem que passará na transmissão..."
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   />
+                </div>
+              </div>
+
+              {/* Efeitos 3D Pré-formatados para Texto */}
+              <div className="p-3.5 bg-gradient-to-r from-indigo-50/70 via-purple-50/50 to-slate-50 rounded-xl border border-indigo-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-indigo-600" />
+                    <span>Efeitos 3D Pré-formatados para Texto</span>
+                  </label>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-600 text-white">
+                    Galeria 3D
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mb-2.5">
+                  Tipografia com relevo volumétrico, extrusão chanfrada e projeção cromática. Clique no estilo 3D para aplicar instantaneamente:
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {effects3DList.map((fx3d) => {
+                    const isSelected = textEffect === fx3d.id;
+                    return (
+                      <button
+                        key={fx3d.id}
+                        type="button"
+                        onClick={() => setTextEffect(fx3d.id)}
+                        className={`p-2 rounded-lg border text-left transition flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-indigo-600 bg-indigo-50/90 ring-2 ring-indigo-500/20 shadow-xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="p-2 rounded bg-slate-950 border border-slate-800 mb-1.5 text-center overflow-hidden">
+                          <span className={`text-[11px] block truncate ${fx3d.previewClass}`}>
+                            {fx3d.previewText}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-0.5">
+                            <span className="text-xs font-bold text-slate-800 truncate">{fx3d.title}</span>
+                            {isSelected && (
+                              <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-500 leading-tight block">
+                            {fx3d.subtitle}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -583,21 +705,25 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
                 {/* Blinking Switch */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
                   <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-500" />
+                    <Zap className={`w-4 h-4 transition-colors ${isBlinking ? 'text-amber-500 animate-pulse' : 'text-slate-400'}`} />
                     <div>
                       <h4 className="text-xs font-bold text-slate-800">Efeito Piscar / Strobe</h4>
-                      <p className="text-[10px] text-slate-500">Alterna visibilidade para atenção</p>
+                      <p className="text-[10px] text-slate-500">
+                        {isBlinking ? 'Piscar estroboscópico de alerta ATIVADO' : 'Alterna visibilidade para atenção máxima'}
+                      </p>
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setIsBlinking(!isBlinking)}
-                    className={`px-3 py-1 rounded text-xs font-bold transition ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                       isBlinking
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-slate-200 text-slate-600'
+                        ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-400/40'
+                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                     }`}
                   >
-                    {isBlinking ? 'LIGADO' : 'DESLIGADO'}
+                    <span className={`w-2 h-2 rounded-full ${isBlinking ? 'bg-white animate-ping' : 'bg-slate-400'}`} />
+                    <span>{isBlinking ? 'LIGADO' : 'DESLIGADO'}</span>
                   </button>
                 </div>
 
@@ -707,21 +833,27 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
                   <div className={getBoxEffectWrapper()}>
                     <div className="bg-slate-950/95 backdrop-blur-md rounded-lg p-2 overflow-hidden flex items-center gap-2.5">
                       {badgeText && (
-                        <span className="bg-gradient-to-r from-red-600 to-purple-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shrink-0 shadow">
+                        <span className={`bg-gradient-to-r from-red-600 to-purple-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shrink-0 shadow ${
+                          isBlinking || textEffect === 'strobe' ? 'animate-strobe' : ''
+                        }`}>
                           {badgeText}
                         </span>
                       )}
                       <div className="overflow-hidden whitespace-nowrap w-full">
                         <span
-                          className={`inline-block text-xs ${getTextEffectClass()} ${
-                            isBlinking ? 'animate-pulse' : ''
-                          } animate-marquee`}
+                          className="inline-block animate-marquee"
                           style={{ 
-                            color: selectedColor,
                             animationDuration: speed === 'slow' ? '22s' : speed === 'medium' ? '14s' : '7s'
                           }}
                         >
-                          {tickerText || 'Nenhum texto ativo no momento'}
+                          <span
+                            className={`inline-block text-xs ${getTextEffectClass()} ${
+                              isBlinking || textEffect === 'strobe' ? 'animate-strobe' : ''
+                            }`}
+                            style={{ color: selectedColor }}
+                          >
+                            {tickerText || 'Nenhum texto ativo no momento'}
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -735,22 +867,26 @@ export const TickerOverlayTab: React.FC<TickerOverlayTabProps> = ({
                           : boxEffect === 'vip_gold'
                           ? 'bg-amber-400 text-slate-950'
                           : 'bg-blue-600 text-white'
-                      }`}>
+                      } ${isBlinking || textEffect === 'strobe' ? 'animate-strobe' : ''}`}>
                         {badgeText}
                       </span>
                     )}
                     
                     <div className="overflow-hidden whitespace-nowrap w-full">
                       <span
-                        className={`inline-block text-xs ${getTextEffectClass()} ${
-                          isBlinking ? 'animate-pulse' : ''
-                        } animate-marquee`}
+                        className="inline-block animate-marquee"
                         style={{ 
-                          color: selectedColor,
                           animationDuration: speed === 'slow' ? '22s' : speed === 'medium' ? '14s' : '7s'
                         }}
                       >
-                        {tickerText || 'Nenhum texto ativo no momento'}
+                        <span
+                          className={`inline-block text-xs ${getTextEffectClass()} ${
+                            isBlinking || textEffect === 'strobe' ? 'animate-strobe' : ''
+                          }`}
+                          style={{ color: selectedColor }}
+                        >
+                          {tickerText || 'Nenhum texto ativo no momento'}
+                        </span>
                       </span>
                     </div>
                   </div>

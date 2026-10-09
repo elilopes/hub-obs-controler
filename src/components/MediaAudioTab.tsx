@@ -18,7 +18,13 @@ import {
   Unlock,
   AlertCircle,
   Sparkles,
-  FileVideo
+  FileVideo,
+  Headphones,
+  Radio,
+  Layers,
+  Settings2,
+  Activity,
+  Check
 } from 'lucide-react';
 
 interface MediaAudioTabProps {
@@ -51,6 +57,24 @@ export const MediaAudioTab: React.FC<MediaAudioTabProps> = ({
   const [currentSlide, setCurrentSlide] = useState(1);
   const totalSlides = 12;
   const [meterLevel, setMeterLevel] = useState(65);
+
+  // Audio Monitor States
+  const [monitorDevice, setMonitorDevice] = useState<'headphones' | 'virtual_cable' | 'zoom_teams'>('zoom_teams');
+  const [monitorTrack, setMonitorTrack] = useState<number>(1);
+  const [eqLow, setEqLow] = useState<number>(0);
+  const [eqMid, setEqMid] = useState<number>(1);
+  const [eqHigh, setEqHigh] = useState<number>(2);
+  const [compressorThreshold, setCompressorThreshold] = useState<number>(-18);
+  const [compressorRatio, setCompressorRatio] = useState<number>(4);
+  const [compressorAttack, setCompressorAttack] = useState<number>(6);
+  const [compressorRelease, setCompressorRelease] = useState<number>(60);
+  const [isAudioMonitorActive, setIsAudioMonitorActive] = useState<boolean>(true);
+  const [audioNotification, setAudioNotification] = useState<string | null>(null);
+
+  const showAudioNotification = (msg: string) => {
+    setAudioNotification(msg);
+    setTimeout(() => setAudioNotification(null), 3500);
+  };
 
   // Simulated audio level bounce
   useEffect(() => {
@@ -407,6 +431,233 @@ export const MediaAudioTab: React.FC<MediaAudioTabProps> = ({
           )}
         </div>
 
+      </div>
+
+      {/* ==================== AUDIO MONITOR PRO ==================== */}
+      <div className="lg:col-span-12 bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+        {audioNotification && (
+          <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-md text-xs font-bold flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>{audioNotification}</span>
+            </div>
+            <button onClick={() => setAudioNotification(null)} className="text-white hover:text-indigo-200">✕</button>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
+              <Headphones className="w-5 h-5" />
+            </span>
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm">Audio Monitor (Monitoramento & Roteamento Broadcast)</h3>
+              <span className="text-[11px] text-slate-500">
+                Envia faixas de áudio específicas para saídas de hardware ou plataformas como Zoom e Teams, com compressor e equalizador dedicados.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAudioMonitorActive}
+                onChange={(e) => {
+                  setIsAudioMonitorActive(e.target.checked);
+                  showAudioNotification(e.target.checked ? '🎧 Audio Monitor ATIVADO!' : 'Audio Monitor pausado.');
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+            <span className="text-xs font-bold text-slate-700">
+              {isAudioMonitorActive ? 'Monitor ON' : 'Monitor OFF'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+          {/* Coluna 1: Roteamento de Dispositivo & Faixas */}
+          <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 text-slate-900 font-bold">
+              <Radio className="w-4 h-4 text-indigo-600" />
+              <span>Destino de Roteamento (Saída)</span>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-semibold text-slate-600 block mb-1">Dispositivo de Envio</label>
+              <select
+                value={monitorDevice}
+                onChange={(e) => {
+                  setMonitorDevice(e.target.value as any);
+                  showAudioNotification(`Roteamento alterado para ${e.target.value === 'zoom_teams' ? 'Zoom & Teams (Cabo Virtual)' : e.target.value}`);
+                }}
+                className="w-full border border-slate-300 rounded-lg p-2 bg-white text-xs font-medium"
+              >
+                <option value="zoom_teams">Plataformas Zoom & Teams (VB-Audio Virtual Cable)</option>
+                <option value="headphones">Fones de Ouvido de Retorno (Hardware Direto)</option>
+                <option value="virtual_cable">Cabo de Áudio Virtual B (Auxiliar de Gravação)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-semibold text-slate-600 block mb-1">Faixa de Áudio Enviada</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { num: 1, label: 'Faixa 1 (Mix Geral da Live)' },
+                  { num: 2, label: 'Faixa 2 (Microfone Isolado)' },
+                  { num: 3, label: 'Faixa 3 (Mídia/Música Limpa)' },
+                  { num: 4, label: 'Faixa 4 (VDO.Ninja/Convidados)' },
+                ].map((track) => (
+                  <button
+                    key={track.num}
+                    type="button"
+                    onClick={() => {
+                      setMonitorTrack(track.num);
+                      showAudioNotification(`Faixa ${track.num} roteada para saída`);
+                    }}
+                    className={`p-2 rounded-lg border text-[11px] font-bold text-left transition ${
+                      monitorTrack === track.num
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    {track.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna 2: Equalizador Paramétrico de 3 Bandas */}
+          <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 text-slate-900 font-bold">
+              <Sliders className="w-4 h-4 text-emerald-600" />
+              <span>Equalizador Broadcast (3 Bandas)</span>
+            </div>
+
+            <div className="space-y-2.5">
+              <div>
+                <div className="flex justify-between text-[11px] font-medium text-slate-700">
+                  <span>Graves (Low 80Hz - Calor vocal)</span>
+                  <span className="font-mono font-bold text-emerald-700">{eqLow > 0 ? `+${eqLow}` : eqLow} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min="-12"
+                  max="12"
+                  value={eqLow}
+                  onChange={(e) => setEqLow(Number(e.target.value))}
+                  className="w-full accent-emerald-600"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] font-medium text-slate-700">
+                  <span>Médios (Mid 1kHz - Clareza e Presença)</span>
+                  <span className="font-mono font-bold text-emerald-700">{eqMid > 0 ? `+${eqMid}` : eqMid} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min="-12"
+                  max="12"
+                  value={eqMid}
+                  onChange={(e) => setEqMid(Number(e.target.value))}
+                  className="w-full accent-emerald-600"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] font-medium text-slate-700">
+                  <span>Agudos (High 10kHz - Brilho e Ar)</span>
+                  <span className="font-mono font-bold text-emerald-700">{eqHigh > 0 ? `+${eqHigh}` : eqHigh} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min="-12"
+                  max="12"
+                  value={eqHigh}
+                  onChange={(e) => setEqHigh(Number(e.target.value))}
+                  className="w-full accent-emerald-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna 3: Compressor Dinâmico de Transmissão */}
+          <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 text-slate-900 font-bold">
+              <Activity className="w-4 h-4 text-blue-600" />
+              <span>Compressor Dinâmico do Monitor</span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-600 block">Threshold</span>
+                  <span className="font-mono font-bold text-blue-700">{compressorThreshold} dB</span>
+                  <input
+                    type="range"
+                    min="-36"
+                    max="0"
+                    value={compressorThreshold}
+                    onChange={(e) => setCompressorThreshold(Number(e.target.value))}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-slate-600 block">Ratio (Compressão)</span>
+                  <span className="font-mono font-bold text-blue-700">{compressorRatio}:1</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={compressorRatio}
+                    onChange={(e) => setCompressorRatio(Number(e.target.value))}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-600 block">Ataque: {compressorAttack}ms</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="50"
+                    value={compressorAttack}
+                    onChange={(e) => setCompressorAttack(Number(e.target.value))}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-slate-600 block">Release: {compressorRelease}ms</span>
+                  <input
+                    type="range"
+                    min="20"
+                    max="300"
+                    value={compressorRelease}
+                    onChange={(e) => setCompressorRelease(Number(e.target.value))}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => showAudioNotification('✅ Configuração de Áudio Monitor aplicada no OBS Studio!')}
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Aplicar Parâmetros de Monitoramento</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>

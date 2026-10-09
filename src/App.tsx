@@ -33,11 +33,25 @@ import {
   ScriptsAutomationsTab 
 } from './components/ScriptsAutomationsTab';
 import { 
+  ScreenRecorderTab 
+} from './components/ScreenRecorderTab';
+import { 
   QuickShareModal 
 } from './components/QuickShareModal';
 import { 
   OBSConnectionModal 
 } from './components/OBSConnectionModal';
+import { 
+  HotkeysModal,
+  HotkeyMapping,
+  DEFAULT_HOTKEYS
+} from './components/HotkeysModal';
+import {
+  VoiceCommandsBar
+} from './components/VoiceCommandsBar';
+import {
+  MultiSoftwareBroadcastTab
+} from './components/MultiSoftwareBroadcastTab';
 import { 
   OBSConnectionConfig, 
   StreamStats, 
@@ -62,20 +76,69 @@ import {
   Sparkles,
   Layers,
   Smartphone,
-  Film
+  Film,
+  Monitor,
+  Keyboard,
+  Scissors,
+  Tv
 } from 'lucide-react';
 import { obsService } from './services/obsWebSocketService';
 import { ProfileManager } from './services/profileManager';
 
 export default function App() {
+  const [lang, setLang] = useState<"pt" | "en">("pt");
+
+  const t = {
+    pt: {
+      master: "Controle & Cenas",
+      multisoftware: "Multi-Software Broadcast",
+      screen_recorder: "Gravador de Tela & Cortes",
+      quality: "Qualidade Vídeo & Gravação",
+      scripts: "Scripts & Embelezamento",
+      media: "Mídia & Áudio",
+      ticker: "Letreiro Dinâmico",
+      vdo: "VDO.Ninja Room",
+      multirtmp: "Multi-RTMP & Aitum",
+      switcher: "Automações & Regras",
+      logins: "Logins & APIs",
+      manual: "Manual Técnico"
+    },
+    en: {
+      master: "Control & Scenes",
+      multisoftware: "Multi-Software Broadcast",
+      screen_recorder: "Screen Recorder & Clips",
+      quality: "Video Quality & Recording",
+      scripts: "Scripts & Beautification",
+      media: "Media & Audio",
+      ticker: "Dynamic Ticker",
+      vdo: "VDO.Ninja Room",
+      multirtmp: "Multi-RTMP & Aitum",
+      switcher: "Automations & Rules",
+      logins: "Logins & APIs",
+      manual: "Technical Manual"
+    }
+  };
+
+  const currentLabels = t[lang];
   // Navigation
   const [activeTab, setActiveTab] = useState<
-    'master' | 'quality' | 'scripts' | 'media' | 'ticker' | 'vdo' | 'multirtmp' | 'switcher' | 'logins' | 'manual'
+    'master' | 'multisoftware' | 'quality' | 'screen_recorder' | 'scripts' | 'media' | 'ticker' | 'vdo' | 'multirtmp' | 'switcher' | 'logins' | 'manual'
   >('master');
 
   // Modals
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isHotkeysModalOpen, setIsHotkeysModalOpen] = useState(false);
+
+  // Hotkeys state
+  const [hotkeys, setHotkeys] = useState<HotkeyMapping>(() => {
+    try {
+      const saved = localStorage.getItem('central_hub_hotkeys');
+      return saved ? JSON.parse(saved) : DEFAULT_HOTKEYS;
+    } catch {
+      return DEFAULT_HOTKEYS;
+    }
+  });
 
   // Profiles State
   const [profiles, setProfiles] = useState<StudioProfile[]>(() => ProfileManager.getProfiles());
@@ -367,7 +430,10 @@ export default function App() {
         }
       }
       setStats((prev) => ({ ...prev, isRecording: false, recordingTime: 0 }));
-      setStatusMessage({ text: 'Gravação salva no OBS', color: '#d97706' });
+      setStatusMessage({ 
+        text: '📁 Gravação salva no OBS! [Open Last Recording: Pasta de arquivos aberta automaticamente]', 
+        color: '#16a34a' 
+      });
     } else {
       if (obsConfig.mode === 'direct') {
         try {
@@ -377,9 +443,79 @@ export default function App() {
         }
       }
       setStats((prev) => ({ ...prev, isRecording: true, recordingTime: 0 }));
-      setStatusMessage({ text: '⏺ Gravando localmente no OBS...', color: '#16a34a' });
+      setStatusMessage({ text: '⏺ Gravando localmente no OBS Studio...', color: '#16a34a' });
     }
   };
+
+  // Global Hotkeys Listener
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignora se estiver digitando em campos de formulário
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      let keyStr = e.key.toUpperCase();
+      if (e.key === ' ') keyStr = 'SPACE';
+
+      const modifiers: string[] = [];
+      if (e.ctrlKey) modifiers.push('Ctrl');
+      if (e.shiftKey) modifiers.push('Shift');
+      if (e.altKey) modifiers.push('Alt');
+
+      const fullKey = modifiers.length > 0 ? `${modifiers.join('+')}+${keyStr}` : keyStr;
+
+      const matches = (targetHotkey: string) => {
+        return (
+          targetHotkey.toUpperCase() === keyStr ||
+          targetHotkey.toUpperCase() === fullKey.toUpperCase()
+        );
+      };
+
+      if (matches(hotkeys.toggleStream)) {
+        e.preventDefault();
+        handleToggleStream();
+      } else if (matches(hotkeys.toggleRecord)) {
+        e.preventDefault();
+        handleToggleRecord();
+      } else if (matches(hotkeys.toggleVirtualCam)) {
+        e.preventDefault();
+        handleToggleVirtualCam();
+      } else if (matches(hotkeys.toggleMute)) {
+        e.preventDefault();
+        setVolume((prev) => {
+          const next = prev > 0 ? 0 : 85;
+          setStatusMessage({
+            text: next === 0 ? '🔇 Microfone silenciado (Atalho de Teclado)' : '🎙️ Microfone ativado (Atalho de Teclado)',
+            color: next === 0 ? '#dc2626' : '#16a34a',
+          });
+          return next;
+        });
+      } else if (matches(hotkeys.saveReplay)) {
+        e.preventDefault();
+        handleSaveReplay();
+      } else if (matches(hotkeys.openScreenRecorder)) {
+        e.preventDefault();
+        setActiveTab('screen_recorder');
+        setStatusMessage({ text: '📹 Gravador de Tela Aberto (Atalho de Teclado)', color: '#2563eb' });
+      } else if (matches(hotkeys.scene1)) {
+        e.preventDefault();
+        if (scenes[0]) handleSelectScene(scenes[0].name);
+      } else if (matches(hotkeys.scene2)) {
+        e.preventDefault();
+        if (scenes[1]) handleSelectScene(scenes[1].name);
+      } else if (matches(hotkeys.scene3)) {
+        e.preventDefault();
+        if (scenes[2]) handleSelectScene(scenes[2].name);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [hotkeys, stats.isStreaming, stats.isRecording, isVirtualCamActive, scenes]);
 
   const handleSelectScene = async (sceneName: string) => {
     setCurrentScene(sceneName);
@@ -714,6 +850,8 @@ export default function App() {
 
   const navTabs = [
     { id: 'master', label: 'Controle & Cenas', icon: <Sliders className="w-4 h-4" /> },
+    { id: 'multisoftware', label: 'Multi-Software Broadcast', icon: <Tv className="w-4 h-4" /> },
+    { id: 'screen_recorder', label: 'Gravador de Tela & Cortes', icon: <Monitor className="w-4 h-4" /> },
     { id: 'quality', label: 'Qualidade Vídeo & Gravação', icon: <Film className="w-4 h-4" /> },
     { id: 'scripts', label: 'Scripts & Embelezamento', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'media', label: 'Mídia & Áudio', icon: <Volume2 className="w-4 h-4" /> },
@@ -732,6 +870,8 @@ export default function App() {
       <Header
         obsConfig={obsConfig}
         stats={stats}
+        lang={lang}
+        onToggleLang={() => setLang(prev => prev === "pt" ? "en" : "pt")}
         hasStreamKey={!!activeStreamKey && activeStreamKey.trim().length > 0}
         streamKeyLabel={streamKeyLabel}
         isVirtualCamActive={isVirtualCamActive}
@@ -749,28 +889,75 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
         {/* Navigation Tabs Bar */}
-        <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-1.5 overflow-x-auto flex gap-1">
-          {navTabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-1.5 overflow-x-auto flex items-center justify-between gap-1">
+          <div className="flex gap-1 overflow-x-auto">
+            {navTabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Botão de Atalhos Globais */}
+          <button
+            type="button"
+            onClick={() => setIsHotkeysModalOpen(true)}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition shadow-xs cursor-pointer ml-2"
+            title="Programar e visualizar Teclas de Atalho (Hotkeys)"
+          >
+            <Keyboard className="w-3.5 h-3.5 text-blue-400" />
+            <span className="hidden sm:inline">Teclas de Atalho</span>
+          </button>
         </div>
+
+        {/* Barra Superior de Controle por Voz para a Live */}
+        <VoiceCommandsBar
+          onStartStream={() => {
+            if (!stats.isStreaming) handleToggleStream();
+          }}
+          onStopStream={() => {
+            if (stats.isStreaming) handleToggleStream();
+          }}
+          onStartRecord={() => {
+            if (!stats.isRecording) handleToggleRecord();
+          }}
+          onStopRecord={() => {
+            if (stats.isRecording) handleToggleRecord();
+          }}
+          onToggleVirtualCam={handleToggleVirtualCam}
+          onMuteMic={() => {
+            setVolume(0);
+            setStatusMessage({ text: '🔇 Microfone silenciado por comando de voz', color: '#e11d48' });
+          }}
+          onUnmuteMic={() => {
+            setVolume(85);
+            setStatusMessage({ text: '🎙️ Microfone aberto (85%) por comando de voz', color: '#16a34a' });
+          }}
+          onSelectScene={handleSelectScene}
+          onSaveReplay={handleSaveReplay}
+          isStreaming={stats.isStreaming}
+          isRecording={stats.isRecording}
+          currentScene={currentScene}
+        />
 
         {/* Tab Content Panels */}
         <div className="animate-in fade-in duration-200">
+          {activeTab === 'multisoftware' && (
+            <MultiSoftwareBroadcastTab />
+          )}
+
           {activeTab === 'master' && (
             <MasterControlTab
               scenes={scenes}
@@ -783,6 +970,15 @@ export default function App() {
               onPTZControl={handlePTZControl}
               ptzState={ptzState}
               isStreaming={stats.isStreaming}
+            />
+          )}
+
+          {activeTab === 'screen_recorder' && (
+            <ScreenRecorderTab
+              openLastRecordingEnabled={true}
+              onRecordingFinished={(_blob, filename) => {
+                setStatusMessage({ text: `✅ Gravação WebM salva: ${filename}`, color: '#16a34a' });
+              }}
             />
           )}
 
@@ -959,6 +1155,20 @@ export default function App() {
         onConnect={handleConnectProfile}
         onDisconnect={handleDisconnect}
         onTestConnection={handleTestConnection}
+        onNavigateToMultiSoftware={() => {
+          setIsSettingsModalOpen(false);
+          setActiveTab('multisoftware');
+        }}
+      />
+
+      <HotkeysModal
+        isOpen={isHotkeysModalOpen}
+        onClose={() => setIsHotkeysModalOpen(false)}
+        hotkeys={hotkeys}
+        onSaveHotkeys={(newHotkeys) => {
+          setHotkeys(newHotkeys);
+          setStatusMessage({ text: '✅ Teclas de atalho reprogramadas com sucesso!', color: '#16a34a' });
+        }}
       />
 
       {/* Footer */}

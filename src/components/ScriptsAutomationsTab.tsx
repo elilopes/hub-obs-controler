@@ -24,6 +24,7 @@ import {
   Filter
 } from 'lucide-react';
 import { PopularScriptItem } from '../types';
+import { StudioEffectsSuite } from './StudioEffectsSuite';
 
 interface ScriptsAutomationsTabProps {
   onTriggerScriptSim: (scriptId: string, name: string) => void;
@@ -38,6 +39,23 @@ export const ScriptsAutomationsTab: React.FC<ScriptsAutomationsTabProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedScriptId, setCopiedScriptId] = useState<string | null>(null);
   const [activeSimScript, setActiveSimScript] = useState<string | null>(null);
+
+  // Live Broadcast FX state
+  const [liveFxState, setLiveFxState] = useState({
+    confetti: false,
+    fireworks: false,
+    snow: false,
+    disco: false,
+    applaud: false,
+  });
+
+  const toggleLiveFx = (fx: keyof typeof liveFxState) => {
+    setLiveFxState(prev => {
+      const next = { ...prev, [fx]: !prev[fx] };
+      onTriggerScriptSim('live_fx', `Efeito de Live Ativado: ${fx} -> ${next[fx] ? 'Ligado' : 'Desligado'}`);
+      return next;
+    });
+  };
 
   const scriptsData: PopularScriptItem[] = [
     {
@@ -296,6 +314,196 @@ AspectRatio = "16:9"
       howToInstall: 'Instale o plugin Source Dock do Exeldro. Vá em Exibir > Docks > Adicionar Source Dock. Escolha o nome da câmera que deseja monitorar.',
       settingsSummary: 'Resolução: 1080p | Dock desacoplável | Aceleração por GPU',
     },
+    {
+      id: 'advanced_masks',
+      name: 'Advanced Masks (Recortes & Formas Móveis)',
+      category: 'visual',
+      authorOrSource: 'OBS Studio Image Mask / Exeldro',
+      tag: 'Câmeras Personalizadas',
+      description: 'Aplica máscaras de recorte personalizadas (círculo, retângulo com bordas arredondadas, corações e hexágonos) para webcams e fontes, móveis pela tela.',
+      benefits: [
+        'Webcam com formato de coração, círculo ou cantos suaves',
+        'Posicionamento livre em qualquer ponto do canvas',
+        'Borda suave com canal alfa sem pixelização',
+        'Baixíssimo consumo de GPU'
+      ],
+      luaOrPythonCode: `-- OBS Advanced Mask Filter Config
+MaskType = "AlphaMask"
+MaskShape = "Squircle" -- Circle, Heart, RoundedRect
+BorderRadius = 32
+PositionX = 0.80
+PositionY = 0.75`,
+      howToInstall: 'Clique com botão direito na sua Webcam > Filtros > Filtros de Efeito (+) > Máscara de Imagem / Mistura. Selecione o formato desejado.',
+      settingsSummary: 'Modo: Canal Alfa | Formato: Círculo / Coração | Posição Móvel',
+    },
+    {
+      id: 'face_tracker_auto',
+      name: 'Face Tracking (Câmera Acompanhar o Rosto)',
+      category: 'visual',
+      authorOrSource: 'OBS Face Tracker / AI Vision',
+      tag: 'Apresentação Dinâmica',
+      description: 'Rastreia o rosto do apresentador em tempo real e movimenta a câmera digitalmente (pan/tilt) para mantê-lo sempre enquadrado.',
+      benefits: [
+        'Enquadramento automático sem operador de câmera',
+        'Suavização inteligente que evita movimentos bruscos',
+        'Margem superior (headroom) perfeita para lives',
+        'Processamento acelerado por IA na placa de vídeo'
+      ],
+      luaOrPythonCode: `-- OBS Face Tracker Script
+TrackingMode = "FaceCentering"
+Smoothness = 0.85
+HeadroomPercent = 20.0
+MaxPanSpeed = 15.0`,
+      howToInstall: 'Instale o plugin Face Tracker no OBS. Aplique como filtro na sua fonte de câmera e ative a detecção automática facial.',
+      settingsSummary: 'Suavização: 85% | Headroom: 20% | Sensibilidade: 70%',
+    },
+    {
+      id: 'bg_removal_no_green',
+      name: 'Remover Fundo Sem Pano Verde (AI Greenscreen)',
+      category: 'visual',
+      authorOrSource: 'Background Removal Plugin (royshil)',
+      tag: 'Inteligência Artificial',
+      description: 'Remove o fundo da webcam ou adiciona desfoque bokeh cinematográfico sem precisar de tecido verde físico.',
+      benefits: [
+        'Dispensa iluminação cara e panos verdes no quarto/estúdio',
+        'Desfoque suave estilo lente prime f/1.4',
+        'Substituição de cenário por estúdios virtuais 3D',
+        'Execução em DirectML / ONNX Runtime na GPU'
+      ],
+      luaOrPythonCode: `-- AI Background Removal Filter
+Model = "SINet / RobustVideoMatting"
+InferenceDevice = "GPU_DirectML"
+BlurRadius = 18.0
+Threshold = 0.85`,
+      howToInstall: 'Baixe o plugin obs-backgroundremoval. No OBS, vá em Filtros da Webcam (+) > Background Removal e escolha Desfoque ou Cromaqui Virtual.',
+      settingsSummary: 'Modelo: RVM / ONNX | Aceleração: GPU | Desfoque: 18px',
+    },
+    {
+      id: 'input_overlay_stream',
+      name: 'Input Overlay (Teclado, Mouse & Gamepad na Live)',
+      category: 'interatividade',
+      authorOrSource: 'univrsal / Input-Overlay',
+      tag: 'Gamers & Tutoriais',
+      description: 'Exibe teclado translúcido, mouse ou controle na tela, iluminando em tempo real todas as teclas e cliques pressionados.',
+      benefits: [
+        'Perfeito para tutoriais de edição, speedruns e gameplay',
+        'Mostra cliques esquerdo, direito e roda do mouse',
+        'Suporte a controles de Xbox, PlayStation e volantes',
+        'Design translúcido personalizável'
+      ],
+      luaOrPythonCode: `-- Input Overlay Hook
+Device = "Keyboard_Mouse"
+Layout = "WASD_Minimal"
+KeyReleaseDelay = 80 -- ms
+Opacity = 0.85`,
+      howToInstall: 'Instale o plugin input-overlay no OBS. Adicione uma fonte "Input Overlay" na sua cena e selecione o preset de textura e mapa de teclas.',
+      settingsSummary: 'Dispositivo: Teclado + Mouse | Latência: 0ms | Opacidade: 85%',
+    },
+    {
+      id: 'stroke_glow_shadow',
+      name: 'Stroke Glow Shadow (Bordas, Neon & Sombras)',
+      category: 'visual',
+      authorOrSource: 'OBS ShaderFilter / StreamFX',
+      tag: 'Acabamento Visual',
+      description: 'Aplica bordas coloridas, brilho neon pulsante e sombras projetadas realistas em qualquer webcam, janela ou letreiro.',
+      benefits: [
+        'Destaca a câmera sobre fundos escuros de jogos',
+        'Brilho neon com cor personalizável para tema do canal',
+        'Sombras suaves que dão profundidade visual 3D',
+        'Executado 100% via GPU Shaders'
+      ],
+      luaOrPythonCode: `// HLSL Shader: Stroke Glow Shadow
+float4 stroke_color = float4(0.23, 0.51, 0.96, 1.0);
+float stroke_width = 4.0;
+float glow_radius = 16.0;
+float shadow_blur = 20.0;`,
+      howToInstall: 'No OBS, adicione o filtro ShaderFilter na sua câmera. Carregue o arquivo stroke-glow.shader e configure cores e raio de brilho.',
+      settingsSummary: 'Borda: 4px | Glow: 16px | Sombra: 20px Gaussiano',
+    },
+    {
+      id: 'downstream_keyer_dsk',
+      name: 'Downstream Keyer (DSK - Camada Persistente Global)',
+      category: 'automacao',
+      authorOrSource: 'Exeldro / OBS Downstream Keyer',
+      tag: 'Padrão TV Broadcast',
+      description: 'Mantém uma camada fixa (como marca d’água da emissora, placar ou alertas) sobreposta a todas as cenas sem clonagem.',
+      benefits: [
+        'O logotipo do canal nunca desaparece ao trocar de cena',
+        'Funciona como o DSK de switchers profissionais (Blackmagic ATEM / Tricaster)',
+        'Permite ligar e desligar com 1 botão de atalho',
+        'Organiza e despolui as cenas do OBS'
+      ],
+      luaOrPythonCode: `-- OBS DSK Global Overlay
+DSK_Source = "Logo_Canal_Oficial"
+PersistAcrossScenes = true
+Transition = "Fade"
+TransitionDuration = 300`,
+      howToInstall: 'Instale o plugin Downstream Keyer do Exeldro. Vá em Exibir > Docks > Downstream Keyer. Selecione a fonte do seu logo como DSK 1.',
+      settingsSummary: 'Modo: Global Persistente | Transição: Fade 300ms | DSK: Ativo',
+    },
+    {
+      id: 'live_automated_captions',
+      name: 'Legendas Automatizadas em Tempo Real (Speech-to-Text)',
+      category: 'interatividade',
+      authorOrSource: 'CloudFree Subtitles / Web Speech',
+      tag: 'Acessibilidade Total',
+      description: 'Gera legendas automáticas em tempo real a partir da fala do microfone, com opções de estilo (Closed Caption, Karaokê Gamer, Cyberpunk).',
+      benefits: [
+        'Torna a live 100% acessível para deficientes auditivos',
+        'Gera legendas em ambientes barulhentos onde o público assiste no mudo',
+        'Estilo visual configurável de acordo com o tema da live',
+        'Reconhecimento contínuo em Português Brasileiro (PT-BR)'
+      ],
+      luaOrPythonCode: `-- Realtime Captions Webhook
+Language = "pt-BR"
+Style = "Karaoke_Gamer"
+MaxLineChars = 42
+DisplayDuration = 4.5 -- segundos`,
+      howToInstall: 'Ative a ferramenta de legendas na aba Scripts & Embelezamento ou adicione uma fonte de Navegador no OBS apontando para o gerador de GC.',
+      settingsSummary: 'Idioma: pt-BR | Estilos: Closed Caption / Karaokê / Cyberpunk',
+    },
+    {
+      id: 'lumetric_corrector',
+      name: 'Lumetric Corrector (Color Grading & LUTs Premiere)',
+      category: 'visual',
+      authorOrSource: 'OBS Lumetric Filter Suite',
+      tag: 'Cinema & Cores',
+      description: 'Script de correção de cor inspirado no Adobe Premiere Pro para calibrar balanço de branco, contraste e aplicar LUTs de cinema.',
+      benefits: [
+        'Ajuste fino de temperatura de cor (Kelvin) e tonalidade (tint)',
+        'Aplicação de LUTs cinematográficos (Teal & Orange, Vintage, Film Noir)',
+        'Controle de realces e sombras sem estourar o sinal de vídeo',
+        'Equilíbrio perfeito de tons de pele'
+      ],
+      luaOrPythonCode: `-- Lumetric Premiere Grading
+Exposure = 0.0
+Contrast = 1.15
+TemperatureKelvin = 5600
+LUT_Path = "LUTs/Teal_Orange_Hollywood.cube"`,
+      howToInstall: 'No OBS, clique na sua Câmera > Filtros > Aplicar LUT. Escolha qualquer arquivo .cube de correção de cor fornecido na suíte.',
+      settingsSummary: 'LUT: Teal & Orange / Vintage | Temperatura: 5600K | Realces: -5',
+    },
+    {
+      id: 'transform_3d_realtime',
+      name: 'Transformações 3D em Tempo Real (Spatial Camera)',
+      category: 'visual',
+      authorOrSource: 'StreamFX / 3D Transform',
+      tag: 'Efeito 3D Espacial',
+      description: 'Permite rotacionar qualquer fonte nos eixos tridimensionais (X, Y, Z), aplicando perspectiva, curvatura e profundidade de cena.',
+      benefits: [
+        'Cria efeito de tela inclinada para streamers de games',
+        'Projeção em perspectiva para mesas virtuais e telões 3D',
+        'Animações de rotação suaves com o Move Transition',
+        'Aceleração direta via pipeline 3D da GPU'
+      ],
+      luaOrPythonCode: `-- 3D Transform Filter
+RotationX_Pitch = 12.0
+RotationY_Yaw = -18.0
+RotationZ_Roll = 0.0
+Perspective = 800.0`,
+      howToInstall: 'No OBS Studio com StreamFX instalado, adicione o filtro "Transformação 3D" na sua fonte e ajuste a rotação nos eixos X, Y e Z.',
+      settingsSummary: 'Eixos: X / Y / Z | Perspectiva: 800px | Aceleração: GPU 3D',
+    },
   ];
 
   const filteredScripts = scriptsData.filter((item) => {
@@ -323,29 +531,172 @@ AspectRatio = "16:9"
 
   return (
     <div className="space-y-6">
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 border border-purple-800/40 rounded-xl p-5 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="p-1.5 rounded-lg bg-purple-600/30 text-purple-400 border border-purple-500/40">
-              <Sparkles className="w-5 h-5" />
-            </span>
-            <h2 className="text-lg font-bold text-white">Scripts & Plugins Populares para Embelezar e Automatizar Lives</h2>
-            <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold">
-              Top 10 Mundial
+      {/* PAINEL DE ANIMAÇÕES E EFEITOS ESPECIAIS PARA LIVE */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl border border-purple-500/30 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-black tracking-wide flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-yellow-400 animate-spin" style={{ animationDuration: '4s' }} />
+                Animações & Efeitos Especiais para Live
+              </h3>
+              <p className="text-xs text-purple-200 mt-0.5">
+                Dispare efeitos dinâmicos instantaneamente na tela da transmissão para engajar sua audiência ao vivo.
+              </p>
+            </div>
+            <span className="bg-purple-500/30 text-purple-300 text-[10px] px-2.5 py-1 rounded-full font-mono border border-purple-400/30">
+              OBS / Broadcast Overlay FX
             </span>
           </div>
-          <p className="text-xs text-slate-300 max-w-2xl">
-            Catálogo completo com os scripts Lua, plugins e filtros mais utilizados por grandes canais e emissoras para dar acabamento cinematográfico, evitar quedas de rede e automatizar trocas de câmera.
-          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            {/* Confetti */}
+            <button
+              onClick={() => toggleLiveFx('confetti')}
+              className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                liveFxState.confetti 
+                  ? 'bg-gradient-to-br from-pink-500 to-purple-600 border-pink-300 shadow-lg shadow-pink-500/40 text-white scale-105' 
+                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white/90'
+              }`}
+            >
+              <span className="text-2xl">🎉</span>
+              <span className="text-xs font-bold text-center">Chuva de Confetes</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-black/30 font-mono">
+                {liveFxState.confetti ? '🟢 Ativo' : '⚪ Desligado'}
+              </span>
+            </button>
+
+            {/* Fireworks */}
+            <button
+              onClick={() => toggleLiveFx('fireworks')}
+              className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                liveFxState.fireworks 
+                  ? 'bg-gradient-to-br from-amber-500 to-red-600 border-amber-300 shadow-lg shadow-amber-500/40 text-white scale-105' 
+                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white/90'
+              }`}
+            >
+              <span className="text-2xl">🎆</span>
+              <span className="text-xs font-bold text-center">Fogos de Artifício</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-black/30 font-mono">
+                {liveFxState.fireworks ? '🟢 Ativo' : '⚪ Desligado'}
+              </span>
+            </button>
+
+            {/* Snow */}
+            <button
+              onClick={() => toggleLiveFx('snow')}
+              className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                liveFxState.snow 
+                  ? 'bg-gradient-to-br from-cyan-500 to-blue-600 border-cyan-300 shadow-lg shadow-cyan-500/40 text-white scale-105' 
+                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white/90'
+              }`}
+            >
+              <span className="text-2xl">❄️</span>
+              <span className="text-xs font-bold text-center">Neve Caindo</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-black/30 font-mono">
+                {liveFxState.snow ? '🟢 Ativo' : '⚪ Desligado'}
+              </span>
+            </button>
+
+            {/* Disco */}
+            <button
+              onClick={() => toggleLiveFx('disco')}
+              className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                liveFxState.disco 
+                  ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 border-yellow-300 shadow-lg shadow-purple-500/40 text-white scale-105' 
+                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white/90'
+              }`}
+            >
+              <span className="text-2xl">🪩</span>
+              <span className="text-xs font-bold text-center">Luzes Boates</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-black/30 font-mono">
+                {liveFxState.disco ? '🟢 Ativo' : '⚪ Desligado'}
+              </span>
+            </button>
+
+            {/* Applaud */}
+            <button
+              onClick={() => toggleLiveFx('applaud')}
+              className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                liveFxState.applaud 
+                  ? 'bg-gradient-to-br from-emerald-500 to-teal-600 border-emerald-300 shadow-lg shadow-emerald-500/40 text-white scale-105' 
+                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white/90'
+              }`}
+            >
+              <span className="text-2xl">👏</span>
+              <span className="text-xs font-bold text-center">Mãos Aplaudindo</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-black/30 font-mono">
+                {liveFxState.applaud ? '🟢 Ativo' : '⚪ Desligado'}
+              </span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-purple-300 bg-purple-900/50 border border-purple-700/60 px-3 py-1.5 rounded-lg font-mono">
-            OBS v30+ Compatível
-          </span>
-        </div>
+        {/* OVERLAYS VISUAIS NA TELA QUANDO ATIVADOS */}
+        {liveFxState.confetti && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div
+                key={`confetti-${i}`}
+                className="absolute w-3 h-3 rounded-xs animate-[confetti-fall_3s_linear_infinite]"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `-20px`,
+                  backgroundColor: ['#ff0055', '#00ffcc', '#ffcc00', '#9900ff', '#ffffff'][i % 5],
+                  animationDelay: `${Math.random() * 3}s`,
+                  animationDuration: `${2 + Math.random() * 2}s`
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {liveFxState.snow && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div
+                key={`snow-${i}`}
+                className="absolute w-2 h-2 rounded-full bg-white animate-[snow-fall_4s_linear_infinite]"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `-10px`,
+                  opacity: 0.8,
+                  animationDelay: `${Math.random() * 4}s`,
+                  animationDuration: `${3 + Math.random() * 3}s`
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {liveFxState.fireworks && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center z-20">
+            <div className="w-64 h-64 rounded-full border-4 border-yellow-400 animate-[firework-burst_1.5s_ease-out_infinite] opacity-80 shadow-[0_0_50px_#ff0055]" />
+            <div className="absolute w-48 h-48 rounded-full border-4 border-pink-400 animate-[firework-burst_1.2s_ease-out_infinite] opacity-80 delay-300" />
+          </div>
+        )}
+
+        {liveFxState.disco && (
+          <div className="absolute inset-0 pointer-events-none border-4 border-purple-500 animate-[disco-flash_1s_ease-in-out_infinite] z-20" />
+        )}
+
+        {liveFxState.applaud && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-around pointer-events-none z-20 px-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span
+                key={`applaud-${i}`}
+                className="text-3xl animate-[applaud-bounce_0.6s_ease-in-out_infinite]"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                👏
+              </span>
+            ))}
+          </div>
+        )}
       </div>
+
+      <StudioEffectsSuite onNotify={(msg) => onTriggerScriptSim('fx', msg)} />
 
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">

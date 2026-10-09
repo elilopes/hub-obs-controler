@@ -123,6 +123,20 @@ export const SceneSwitcherTab: React.FC<SceneSwitcherTabProps> = ({
               <span>Exportar JSON para Advanced Scene Switcher</span>
             </button>
           </div>
+
+          {/* Card Esclarecedor: O que o Chaveador faz e por que o Monitor fica ativo */}
+          <div className="mt-4 p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-xs space-y-1.5">
+            <span className="font-bold text-blue-900 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-blue-600" />
+              O que faz o Chaveador e por que o monitor já inicia ativo?
+            </span>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              <strong>Função do Chaveador:</strong> Automatiza cortes de câmera baseado em eventos da transmissão (ex: fim de vinheta, silêncio no microfone, encerramento).
+            </p>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              <strong>Por que "Monitor Ativo" inicia ligado:</strong> O motor precisa estar em modo de escuta em segundo plano para conseguir capturar o gatilho <em>"Ao Iniciar Transmissão"</em> ou o fim do vídeo de contagem regressiva pré-live. Você pode pausá-lo a qualquer momento no botão acima.
+            </p>
+          </div>
         </div>
 
         {/* Add New Automation Rule */}

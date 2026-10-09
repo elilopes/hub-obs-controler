@@ -26,10 +26,56 @@ import {
   ListOrdered,
   BookmarkCheck,
   Compass,
-  FileText
+  FileText,
+  Printer
 } from 'lucide-react';
 
 export const ManualTab: React.FC = () => {
+  const handleSavePDF = (sectionTitle = "Manual Técnico & Operacional Broadcast") => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Por favor, permita pop-ups no navegador para exportar o PDF.");
+      return;
+    }
+    
+    const manualElement = document.getElementById("broadcast-manual-container");
+    const contentHTML = manualElement ? manualElement.innerHTML : document.body.innerHTML;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <title>${sectionTitle}</title>
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; color: #1e293b; line-height: 1.6; padding: 2rem; background: #ffffff; }
+          h1, h2, h3 { color: #0f172a; }
+          button { display: none !important; }
+          table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+          th, td { border: 1px solid #cbd5e1; padding: 0.5rem; text-align: left; }
+          th { background: #f1f5f9; }
+          code, pre { background: #f8fafc; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.85em; }
+          pre { padding: 1rem; overflow-x: auto; }
+          div, section { break-inside: avoid; }
+        </style>
+      </head>
+      <body>
+        <h1>${sectionTitle}</h1>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 2rem;">Gerado em Broadcast Suite - Manual Técnico Oficial</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 2rem;" />
+        ${contentHTML}
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 600);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [activeGuideView, setActiveGuideView] = useState<'all' | 'checklist'>('all');
   
@@ -65,7 +111,7 @@ export const ManualTab: React.FC = () => {
         'Abra o OBS Studio instalado em seu computador (Windows ou Mac/Linux).',
         'No OBS, vá em Ferramentas > Configurações do servidor WebSocket.',
         'Certifique-se de que a opção "Ativar servidor WebSocket" está MARCADA (Porta padrão: 4455).',
-        'No Central Hub OBS, observe o indicador LED "OBS ON" no topo. Se estiver vermelho, clique em "Conectar OBS WebSocket" e informe o IP (localhost), porta (4455) e senha configurada.',
+        'No Central Hub OBS clique no led "OBS OFF" no topo do sistema (cor vermelha); em Perfil de Estúdio Selecionado clique em Estúdio principal (OBS Studio); em Software / Motor de Transmissão Suportado clique em OBS Studio Porta 4455; em Modo de Operação da Conexão clique no Modo direto (obs-websocket-js); então digite: o IP (localhost), a porta (4455) e, a senha configurada; para finalizar clique no botão Salvar e conectar perfil.',
       ],
       proTip: 'Dica Pro: Quando o LED "OBS ON" acender em verde, você terá controle instantâneo e telemetria em tempo real (FPS, CPU e Bitrate) sem latência.'
     },
@@ -82,10 +128,10 @@ export const ManualTab: React.FC = () => {
         'Autenticação YouTube OAuth2: Conecte sua conta Google no card oficial para capturar automaticamente a Stream Key ativa e servidor RTMP do seu canal sem abrir o YouTube Studio.',
         'Para Instagram: clique em "Conectar com Instagram OAuth2" ou insira a Stream Key gerada no Instagram Live Producer.',
         'Use o novo botão "Cópia Cruzada de Stream": ele clona instantaneamente os parâmetros do stream primário (chave e servidor) para a Twitch, Kick, Facebook ou destinos do plugin Sorayuki.',
-        'Ao aplicar a chave no OBS, confira no cabeçalho se o LED "STREAM KEY ON" está ativado (azul/verde brilhante).',
+        'Ao aplicar a chave no OBS, confira no painel de Logins se o status OAuth2 está ativo e pronto para o streaming.',
         'Se for transmitir também na vertical (TikTok/Instagram Reels), ative a saída correspondente no ecossistema Aitum Vertical.',
       ],
-      proTip: 'Cópia Cruzada & Status: O botão "Cópia Cruzada de Stream" economiza minutos preciosos na pré-live replicando as credenciais para todos os canais com 1 clique, e o LED "STREAM KEY ON" confirma a segurança da conexão.'
+      proTip: 'Cópia Cruzada & Status: O botão "Cópia Cruzada de Stream" economiza minutos preciosos na pré-live replicando as credenciais para todos os canais com 1 clique de forma segura.'
     },
     {
       id: 'step3',
@@ -330,11 +376,29 @@ export const ManualTab: React.FC = () => {
       icon: <BookOpen className="w-5 h-5 text-cyan-400" />,
       badge: `${docFunctions.length} Métodos`,
       badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+    },
+    {
+      id: 'bloco-comandos-voz',
+      number: '06',
+      title: 'Comandos por Voz para Transmissão Ao Vivo (Voice Control)',
+      subtitle: 'Comandos falados em Português para iniciar live, trocar cenas, mutar e gravar sem as mãos',
+      icon: <Mic className="w-5 h-5 text-rose-400" />,
+      badge: '14 Comandos',
+      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+    },
+    {
+      id: 'bloco-controle-remoto-vpn',
+      number: '07',
+      title: 'Conexão Remota Online: WebSocket, VPNs & Multi-Softwares',
+      subtitle: 'Tailscale, ZeroTier, Chaveador Automático e controle de vMix, Streamlabs, Wirecast, PRISM e Meld',
+      icon: <Zap className="w-5 h-5 text-amber-400" />,
+      badge: 'Rede & APIs',
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30'
     }
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="broadcast-manual-container">
 
       {/* ÍNDICE DE TODOS OS BLOCOS DO MANUAL TÉCNICO */}
       <div id="bloco-indice-manual" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-white shadow-md space-y-4">
@@ -348,14 +412,32 @@ export const ManualTab: React.FC = () => {
                 <h2 className="font-bold text-base md:text-lg text-white">
                   Índice Geral do Manual Técnico
                 </h2>
-                <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">
-                  5 Blocos Disponíveis
-                </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Selecione qualquer bloco abaixo para ir direto ao conteúdo. Cada bloco possui um botão com seta para cima para retornar a este índice a qualquer momento.
+                Selecione qualquer bloco abaixo para ir direto ao conteúdo. Cada bloco possui um botão com seta para cima para retornar a este índice e opção de imprimir.
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => handleSavePDF()}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Salvar Manual em PDF"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Salvar em PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSavePDF()}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Imprimir Manual Técnico Completo"
+            >
+              <Printer className="w-3.5 h-3.5 text-blue-400" />
+              <span>Imprimir</span>
+            </button>
           </div>
         </div>
 
@@ -437,6 +519,17 @@ export const ManualTab: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
+              {/* Botão Imprimir Bloco 1 */}
+              <button
+                type="button"
+                onClick={() => handleSavePDF()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-600 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Salvar este bloco em PDF"
+              >
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span>Salvar em PDF</span>
+              </button>
+
               {/* Botão de Retorno ao Índice */}
               <button
                 type="button"
@@ -469,8 +562,8 @@ export const ManualTab: React.FC = () => {
           </div>
         </div>
 
-          {/* Destaque dos 4 LEDs de Status do Programa */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/60">
+          {/* Destaque dos 3 LEDs de Status do Programa (OBS, LIVE, REC) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/60">
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-3 w-3 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -484,22 +577,11 @@ export const ManualTab: React.FC = () => {
 
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-3 w-3 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-              </span>
-              <div>
-                <div className="text-xs font-bold text-white">2. LED STREAM KEY ON/OFF</div>
-                <div className="text-[11px] text-slate-300">Chave injetada e pronta (YouTube, Instagram ou outros).</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
               </span>
               <div>
-                <div className="text-xs font-bold text-white">3. LED LIVE ON/OFF</div>
+                <div className="text-xs font-bold text-white">2. LED LIVE ON/OFF</div>
                 <div className="text-[11px] text-slate-300">Transmissão no ar. Destrava controles ao vivo e PTZ.</div>
               </div>
             </div>
@@ -510,7 +592,7 @@ export const ManualTab: React.FC = () => {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
               </span>
               <div>
-                <div className="text-xs font-bold text-white">4. LED REC ON/OFF</div>
+                <div className="text-xs font-bold text-white">3. LED REC ON/OFF</div>
                 <div className="text-[11px] text-slate-300">Gravação local ativa para gravação e corte de vídeos.</div>
               </div>
             </div>
@@ -610,15 +692,26 @@ export const ManualTab: React.FC = () => {
               <h4 className="text-xs font-bold uppercase tracking-wider text-blue-300 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Bloco 02 • Regras de Ouro para uma Transmissão Sem Erros
               </h4>
-              <button
+              <div className="flex items-center gap-2">
+                <button
                 type="button"
-                onClick={() => scrollToBlock('bloco-indice-manual')}
+                onClick={() => handleSavePDF()}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-600 text-[10px] font-bold transition cursor-pointer"
-                title="Voltar ao Índice"
+                title="Salvar este bloco em PDF"
               >
-                <ArrowUp className="w-3 h-3 text-blue-400" />
-                <span>Índice ↑</span>
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span>Salvar em PDF</span>
               </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToBlock('bloco-indice-manual')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-600 text-[10px] font-bold transition cursor-pointer"
+                  title="Voltar ao Índice"
+                >
+                  <ArrowUp className="w-3 h-3 text-blue-400" />
+                  <span>Índice ↑</span>
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs text-slate-300">
               <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700">
@@ -665,15 +758,26 @@ export const ManualTab: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => scrollToBlock('bloco-indice-manual')}
-            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
-            title="Retornar para o Índice do Manual Técnico"
-          >
-            <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
-            <span>Voltar ao Índice ↑</span>
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+                type="button"
+                onClick={() => handleSavePDF()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Salvar este bloco em PDF"
+              >
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span>Salvar em PDF</span>
+              </button>
+            <button
+              type="button"
+              onClick={() => scrollToBlock('bloco-indice-manual')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Retornar para o Índice do Manual Técnico"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
+              <span>Voltar ao Índice ↑</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -776,15 +880,26 @@ export const ManualTab: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => scrollToBlock('bloco-indice-manual')}
-            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
-            title="Retornar para o Índice do Manual Técnico"
-          >
-            <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
-            <span>Voltar ao Índice ↑</span>
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+                type="button"
+                onClick={() => handleSavePDF()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Salvar este bloco em PDF"
+              >
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span>Salvar em PDF</span>
+              </button>
+            <button
+              type="button"
+              onClick={() => scrollToBlock('bloco-indice-manual')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Retornar para o Índice do Manual Técnico"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
+              <span>Voltar ao Índice ↑</span>
+            </button>
+          </div>
         </div>
 
         {/* Tabela Comparativa de Exigências */}
@@ -1251,6 +1366,17 @@ export const ManualTab: React.FC = () => {
               />
             </div>
 
+            {/* Botão Imprimir Bloco 5 */}
+            <button
+                type="button"
+                onClick={() => handleSavePDF()}
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Salvar este bloco em PDF"
+              >
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline">Salvar em PDF</span>
+              </button>
+
             {/* Botão Voltar ao Índice */}
             <button
               type="button"
@@ -1302,6 +1428,400 @@ export const ManualTab: React.FC = () => {
           <span className="text-xs font-bold text-slate-500 italic">
             Desenvolvido por Elias Lopes (liclopes@gmail.com)
           </span>
+        </div>
+
+      </div>
+
+      {/* ========================================================================= */}
+      {/* BLOCO 06: COMANDOS POR VOZ PARA A LIVE & ESTÚDIO (VOICE CONTROL)          */}
+      {/* ========================================================================= */}
+      <div id="bloco-comandos-voz" className="bg-white rounded-xl shadow-xs border border-rose-200 p-6 space-y-6">
+        
+        {/* Header do Bloco com Botões Imprimir e Índice */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-tr from-rose-600 to-pink-600 text-white shadow-md shadow-rose-600/20">
+              <Mic className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300">
+                  BLOCO 06
+                </span>
+                <h3 className="font-bold text-slate-900 text-base md:text-lg">
+                  Comandos por Voz para Transmissão Ao Vivo (Voice Control)
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Acione ações no OBS Studio e na transmissão falando diretamente no seu microfone em Português do Brasil.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* Botão Imprimir Bloco 06 */}
+            <button
+                type="button"
+                onClick={() => handleSavePDF()}
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Salvar este bloco em PDF"
+              >
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline">Salvar em PDF</span>
+              </button>
+
+            {/* Botão Voltar ao Índice */}
+            <button
+              type="button"
+              onClick={() => scrollToBlock('bloco-indice-manual')}
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Retornar para o Índice do Manual Técnico"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden sm:inline">Índice ↑</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Como Funciona o Reconhecimento por Voz */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-rose-500" />
+              1. Reconhecimento Nativo
+            </span>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Utiliza a <strong>Web Speech API (webkitSpeechRecognition)</strong> integrada no Google Chrome, Microsoft Edge, Opera e Safari. Não envia dados para servidores externos.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-amber-500" />
+              2. Latência Quase Zero
+            </span>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              O processamento léxico e a execução ocorrem localmente no navegador, disparando o comando WebSocket para o OBS em milissegundos.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              3. Proteção Hot Mic
+            </span>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Você pode ligar e desligar a escuta a qualquer momento na barra superior com um clique no botão de microfone.
+            </p>
+          </div>
+        </div>
+
+        {/* Tabela de Comandos por Voz Suportados */}
+        <div className="space-y-3">
+          <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <BookmarkCheck className="w-4 h-4 text-rose-600" />
+            <span>Tabela Oficial de Comandos por Voz (Diga em voz alta):</span>
+          </h4>
+
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">O que Falar (Frase de Gatilho)</th>
+                  <th className="px-4 py-3">Ação Executada no OBS Studio</th>
+                  <th className="px-4 py-3">Feedback no Painel</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-[11px]">
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Iniciar live" / "Começar transmissão" / "Entrar ao vivo"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Inicia a transmissão oficial no OBS para todas as plataformas configuradas</td>
+                  <td className="px-4 py-2.5 text-emerald-700 font-semibold">🔴 Iniciar Transmissão</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Parar live" / "Encerrar transmissão" / "Finalizar live"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Finaliza a transmissão com segurança e envia comando de corte</td>
+                  <td className="px-4 py-2.5 text-rose-700 font-semibold">🛑 Encerrar Transmissão</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Iniciar gravação" / "Começar gravação" / "Gravar tela"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Inicia a gravação limpa no disco rígido em alta qualidade</td>
+                  <td className="px-4 py-2.5 text-blue-700 font-semibold">⏺ Iniciar Gravação</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Parar gravação" / "Encerrar gravação"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Interrompe a gravação e aciona a abertura da pasta se ativada</td>
+                  <td className="px-4 py-2.5 text-slate-700 font-semibold">⏹ Parar Gravação</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Mutar microfone" / "Silenciar microfone" / "Mudo"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Coloca o microfone em mudo absoluto instantaneamente (Mute Toggle)</td>
+                  <td className="px-4 py-2.5 text-rose-700 font-semibold">🔇 Mutar Microfone</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Ativar microfone" / "Desmutar microfone" / "Ligar áudio"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Abre o microfone com volume nominal de broadcast (85%)</td>
+                  <td className="px-4 py-2.5 text-emerald-700 font-semibold">🎙️ Microfone Ativado</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Câmera principal" / "Cena principal" / "Cena um"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Troca instantaneamente para a Cena_Principal no OBS Studio</td>
+                  <td className="px-4 py-2.5 text-purple-700 font-semibold">🎬 Cena: Cena_Principal</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Apresentação" / "Slides" / "Palestra"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Troca para a cena com captura de janela do PowerPoint ou PDF</td>
+                  <td className="px-4 py-2.5 text-purple-700 font-semibold">📊 Cena: Apresentacao</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Gameplay" / "Jogo" / "Partida"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Troca para a cena com captura de jogo em tela cheia e webcam overlay</td>
+                  <td className="px-4 py-2.5 text-purple-700 font-semibold">🎮 Cena: Gameplay</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Webcam cheia" / "Câmera cheia" / "Só câmera"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Foca a imagem do apresentador em tela inteira (Webcam_FullScreen)</td>
+                  <td className="px-4 py-2.5 text-purple-700 font-semibold">📷 Cena: Webcam_FullScreen</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Intervalo" / "Já volto" / "Pausa"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Muda para a tela de espera BRB e abaixa música de fundo</td>
+                  <td className="px-4 py-2.5 text-purple-700 font-semibold">☕ Cena: BRB_Intervalo</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Encerramento" / "Terminar" / "Fim da live"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Troca para os créditos finais de encerramento antes do corte</td>
+                  <td className="px-4 py-2.5 text-purple-700 font-semibold">🏁 Cena: Encerramento</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Salvar replay" / "Salvar clipe" / "Pegar jogada"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Dispara o Replay Buffer do OBS e salva os últimos 30 segundos em disco</td>
+                  <td className="px-4 py-2.5 text-amber-700 font-semibold">⭐ Replay Salvo!</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-700">"Câmera virtual" / "Ligar virtual cam"</td>
+                  <td className="px-4 py-2.5 text-slate-700">Inicia ou interrompe a Câmera Virtual do OBS para Zoom, Teams e Meet</td>
+                  <td className="px-4 py-2.5 text-indigo-700 font-semibold">🎥 Câmera Virtual Alternada</td>
+                  <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Ativo</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ========================================================================= */}
+      {/* BLOCO 07: CONEXÃO REMOTA VIA INTERNET: WEBSOCKET, VPNS & MULTI-SOFTWARE    */}
+      {/* ========================================================================= */}
+      <div id="bloco-controle-remoto-vpn" className="bg-white rounded-xl shadow-xs border border-amber-200 p-6 space-y-6">
+        
+        {/* Header do Bloco com Botões Imprimir e Índice */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                  BLOCO 07
+                </span>
+                <h3 className="font-bold text-slate-900 text-base md:text-lg">
+                  Conexão Remota Online: WebSocket, VPNs & Multi-Softwares
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Guia de infraestrutura de rede para operar o OBS Studio remotamente pela internet e integrar outros softwares de transmissão.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* Botão Imprimir Bloco 07 */}
+            <button
+                type="button"
+                onClick={() => handleSavePDF()}
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Salvar este bloco em PDF"
+              >
+                <FileText className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline">Salvar em PDF</span>
+              </button>
+
+            {/* Botão Voltar ao Índice */}
+            <button
+              type="button"
+              onClick={() => scrollToBlock('bloco-indice-manual')}
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Retornar para o Índice do Manual Técnico"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden sm:inline">Índice ↑</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 1. Tópico: Preciso de VPN (Tailscale ou ZeroTier) para controlar pela internet? */}
+        <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs">1</span>
+            <h4 className="font-bold text-slate-900 text-sm">
+              Precisa configurar VPN (Tailscale ou ZeroTier) para controlar o OBS pela Internet?
+            </h4>
+          </div>
+          
+          <div className="space-y-2 text-xs text-slate-700 leading-relaxed">
+            <p>
+              <strong>Na mesma rede local (LAN / Wi-Fi do estúdio):</strong> <span className="text-emerald-700 font-bold">NÃO precisa de VPN.</span> Basta usar o IP local do computador onde o OBS está aberto (ex: <code>192.168.1.100:4455</code>) e a senha definida no OBS.
+            </p>
+            <p>
+              <strong>Pela Internet Pública (Operador remoto fora do estúdio):</strong> <span className="text-amber-800 font-bold">SIM, o uso de uma Mesh VPN como Tailscale ou ZeroTier é altamente recomendado e o padrão profissional.</span>
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div className="bg-white p-3 rounded-lg border border-blue-100 space-y-1">
+                <span className="font-bold text-blue-900 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Por que NÃO fazer Port Forwarding no roteador:
+                </span>
+                <p className="text-[11px] text-slate-600">
+                  Abrir a porta 4455 do seu roteador residencial ou corporativo expõe o computador diretamente a scanners de portas e ataques de força bruta na internet.
+                </p>
+              </div>
+
+              <div className="bg-white p-3 rounded-lg border border-blue-100 space-y-1">
+                <span className="font-bold text-blue-900 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  Vantagens do Tailscale / ZeroTier:
+                </span>
+                <p className="text-[11px] text-slate-600">
+                  Cria uma rede privada virtual ponto-a-ponto com criptografia WireGuard sem abrir portas no roteador. Você conecta no IP privado (ex: <code>100.x.y.z:4455</code>) com total segurança.
+                </p>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 pt-1">
+              💡 <em>Dica de Navegador (Mixed Content):</em> Navegadores modernos em páginas com <code>https://</code> bloqueiam conexões WebSocket não criptografadas (<code>ws://</code>). Se você hospedar o painel online com HTTPS, utilize túnel seguro com certificado TLS (<code>wss://</code> via Tailscale Funnel ou Cloudflare Tunnel) ou acesse o painel na mesma rede.
+            </p>
+          </div>
+        </div>
+
+        {/* 2. Tópico: O que faz o Chaveador Automático e por que o monitor já inicia ativo? */}
+        <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-200 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-purple-600 text-white font-bold text-xs">2</span>
+            <h4 className="font-bold text-slate-900 text-sm">
+              Na aba Automações & Regras: O que faz o Chaveador e por que o LED "Monitor Ativo" já inicia ligado?
+            </h4>
+          </div>
+
+          <div className="space-y-2 text-xs text-slate-700 leading-relaxed">
+            <p>
+              <strong>O que o Chaveador Automático faz:</strong> É o motor inteligente do estúdio inspirado no plugin <em>Advanced Scene Switcher</em>. Ele monitora eventos em tempo real — como término da vinheta de contagem regressiva, silêncio no microfone por mais de 5 segundos, ativação de compartilhamento de tela ou início da transmissão — e realiza cortes de câmera automáticos sem que o operador precise clicar manualmente.
+            </p>
+            <p>
+              <strong>Por que o LED "Monitor Ativo" já inicia ligado sem a live começar:</strong> O motor precisa estar em estado de escuta passiva em segundo plano <em>antes</em> do início da live para conseguir capturar o gatilho <code>"Ao Iniciar Transmissão"</code>. Caso iniciasse desligado, quando o operador clicasse em Iniciar Transmissão, o sistema não conseguiria detectar o momento exato para transitar da tela de espera para a abertura! Você pode pausar o monitor a qualquer momento clicando no botão "Pausar Monitoramento Automático".
+            </p>
+          </div>
+        </div>
+
+        {/* 3. Tópico: Integração com outros softwares além do OBS Studio */}
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-slate-800 text-white font-bold text-xs">3</span>
+            <h4 className="font-bold text-slate-900 text-sm">
+              Além do OBS Studio, é possível controlar outros programas usando WebSocket e APIs?
+            </h4>
+          </div>
+
+          <p className="text-xs text-slate-600 leading-relaxed">
+            <strong className="text-emerald-700 font-bold">SIM!</strong> Este painel conta com arquitetura modular preparada para multi-software. No modal de configurações de conexão, você pode selecionar e cadastrar perfis para:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <Tv className="w-3.5 h-3.5 text-blue-600" />
+                vMix (Estúdios de TV)
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Porta padrão <code>8088</code>. Utiliza vMix Web Controller HTTP API e TCP WebSocket Bridge para trocar inputs, disparar overlays e cortes Cut/Fade.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <Radio className="w-3.5 h-3.5 text-emerald-600" />
+                Streamlabs Desktop
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Porta padrão <code>59650</code>. Comunicação via Streamlabs OBS Remote API WebSocket com token de sessão para trocar cenas e fontes.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <PlayCircle className="w-3.5 h-3.5 text-amber-600" />
+                PRISM Live Studio
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Porta padrão <code>4455</code>. Totalmente compatível com o protocolo OBS WebSocket v5 padrão, controlando cenas, áudio e transmissão.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                Telestream Wirecast
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Porta padrão <code>8080</code>. Integração via Wirecast REST Controller API e WebSocket para disparar master layers e shot transitions.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                Meld Studio
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Porta padrão <code>8989</code>. Conexão WebSocket nativa do novo encoder profissional Meld para controle de cenas e efeitos de áudio.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <Code className="w-3.5 h-3.5 text-rose-600" />
+                Streamer.bot
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Porta padrão <code>8080</code>. WebSocket Server v2 nativo para disparar ações automáticas, recompensas de canal e alertas da live.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl space-y-1.5">
+            <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+              <Tv className="w-4 h-4 text-blue-600" />
+              Mesa de Controle Multi-Software Broadcast Integrada
+            </span>
+            <p className="text-[11px] text-blue-800 leading-relaxed">
+              Você pode operar todos esses softwares diretamente pela aba <strong>"Multi-Software Broadcast"</strong> no menu superior do Central Hub. Ela fornece uma mesa de corte ao vivo com monitores de Preview e Program para vMix (CUT, FADE, QUICKPLAY, Overlays 1-4), seletor de cenas e fontes para Streamlabs Desktop, layouts 9:16 e 16:9 para PRISM Live Studio, layers de transmissão para Wirecast e disparo instantâneo de ações para Streamer.bot.
+            </p>
+          </div>
         </div>
 
       </div>

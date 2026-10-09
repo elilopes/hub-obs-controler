@@ -22,6 +22,8 @@ import { OBSConnectionConfig, StreamStats } from '../types';
 
 interface HeaderProps {
   obsConfig: OBSConnectionConfig;
+  lang?: "pt" | "en";
+  onToggleLang?: () => void;
   stats: StreamStats;
   hasStreamKey?: boolean;
   streamKeyLabel?: string;
@@ -42,6 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
   hasStreamKey = true,
   streamKeyLabel = 'YouTube / Padrão',
   isVirtualCamActive = false,
+  lang = "pt",
+  onToggleLang,
   onNavigateToLogins,
   onOpenCrossStream,
   onToggleVirtualCam,
@@ -98,31 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>{obsConfig.connected ? 'obs on' : 'obs off'}</span>
               </button>
 
-              {/* LED 2: STREAM KEY ON / OFF */}
-              <button
-                type="button"
-                onClick={onNavigateToLogins}
-                className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-all ${
-                  hasStreamKey
-                    ? 'bg-blue-950/80 border-blue-500/50 text-blue-300 hover:bg-blue-900 shadow-sm shadow-blue-950'
-                    : 'bg-rose-950/80 border-rose-500/50 text-rose-300 hover:bg-rose-900'
-                }`}
-                title={
-                  hasStreamKey
-                    ? `Chave de Transmissão Configurada (${streamKeyLabel}). Clique para gerenciar destinos e logins.`
-                    : 'Nenhuma Chave de Transmissão configurada! Clique para adicionar.'
-                }
-              >
-                <span className="relative flex h-2 w-2">
-                  {hasStreamKey && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  )}
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${hasStreamKey ? 'bg-blue-500' : 'bg-rose-500'}`}></span>
-                </span>
-                <span>{hasStreamKey ? 'stream key on' : 'stream key off'}</span>
-              </button>
-
-              {/* LED 3: LIVE ON / OFF */}
+              {/* LED 2: LIVE ON / OFF */}
               <div
                 className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-all ${
                   stats.isStreaming

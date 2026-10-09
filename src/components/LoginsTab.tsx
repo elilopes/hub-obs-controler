@@ -32,6 +32,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { StreamAccountProfile } from '../types';
+import { UnbundledOAuthBlocks, PlatformBlockItem } from './UnbundledOAuthBlocks';
 
 const YouTubeIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -110,6 +111,7 @@ const TeamsIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) 
 );
 
 interface LoginsTabProps {
+  lang?: "pt" | "en";
   isVirtualCamActive?: boolean;
   onToggleVirtualCam?: () => void;
   onApplyYouTubeKeyToOBS: (key: string) => void;
@@ -206,16 +208,362 @@ const DEFAULT_PROFILES: StreamAccountProfile[] = [
     channelName: 'Transmissão Institucional Privada',
   },
   {
-    id: 'wp-fasepa',
+    id: 'wp-portal',
     name: 'Portal Institucional WPStream',
     platform: 'wpstream',
-    streamKey: 'wp_fasepa_104_live_key_992',
+    streamKey: 'wp_portal_live_key_992',
     serverUrl: 'rtmp://live.wpstream.net/show',
-    channelName: 'Canal 104 Governamental',
+    channelName: 'Canal 104 Ao Vivo',
   },
 ];
 
+interface PlatformOAuthCardProps {
+  id: string;
+  name: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  headerGradient: string;
+  badgeLabel: string;
+  isConnected: boolean;
+  isAuthenticating: boolean;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  clientId: string;
+  clientIdLabel?: string;
+  onUpdateClientId: (val: string) => void;
+  clientSecret: string;
+  clientSecretLabel?: string;
+  onUpdateClientSecret: (val: string) => void;
+  serverUrl: string;
+  serverUrlLabel?: string;
+  onUpdateServerUrl: (val: string) => void;
+  streamKey: string;
+  streamKeyLabel?: string;
+  onUpdateStreamKey: (val: string) => void;
+  onApplyToOBS: () => void;
+  onCrossCopy: () => void;
+  devPortalUrl: string;
+  devPortalLabel: string;
+  scopeDescription: string;
+  successMessage?: string | null;
+  extraDetails?: React.ReactNode;
+}
+
+const PlatformOAuthCard: React.FC<PlatformOAuthCardProps> = ({
+  id,
+  name,
+  subtitle,
+  icon,
+  headerGradient,
+  badgeLabel,
+  isConnected,
+  isAuthenticating,
+  onConnect,
+  onDisconnect,
+  clientId,
+  clientIdLabel = 'Client ID ou App ID:',
+  onUpdateClientId,
+  clientSecret,
+  clientSecretLabel = 'Client Secret ou App Secret:',
+  onUpdateClientSecret,
+  serverUrl,
+  serverUrlLabel = 'URL Servidor RTMPS ou Webhook URL direta:',
+  onUpdateServerUrl,
+  streamKey,
+  streamKeyLabel = 'Stream Key (Chave de Transmissão):',
+  onUpdateStreamKey,
+  onApplyToOBS,
+  onCrossCopy,
+  devPortalUrl,
+  devPortalLabel,
+  scopeDescription,
+  successMessage,
+  extraDetails,
+}) => {
+  const [showSecret, setShowSecret] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyVal = (field: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(field);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-5 relative overflow-hidden transition-all hover:border-slate-300 space-y-4">
+      {/* Top Gradient Stripe */}
+      <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${headerGradient}`} />
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 pt-1">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-xl bg-slate-900 text-white shadow-xs shrink-0">
+            {icon}
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-bold text-slate-900 text-base leading-tight truncate">
+              {name}
+            </h3>
+            <span className="text-[11px] text-slate-500 font-medium truncate block">
+              {subtitle}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span
+            className={`text-[10px] px-2.5 py-0.5 rounded-full font-black border flex items-center gap-1 ${
+              isConnected
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+              }`}
+            />
+            <span>{isConnected ? 'CONECTADO (ON)' : 'AGUARDANDO (OFF)'}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Botão de Login OAuth2 */}
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-bold text-slate-700">Autenticação OAuth2 Oficial</span>
+          <span className="text-[10px] font-mono text-slate-500">{badgeLabel}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isConnected ? (
+            <div className="flex items-center justify-between w-full p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-xs font-semibold">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Conta Autenticada e Vinculada via OAuth2</span>
+              </span>
+              <button
+                type="button"
+                onClick={onDisconnect}
+                className="px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-100/60 rounded transition flex items-center gap-1 cursor-pointer"
+                title="Desconectar OAuth2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Desconectar</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onConnect}
+              disabled={isAuthenticating}
+              className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition shadow-xs flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {isAuthenticating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Autenticando via OAuth2...</span>
+                </>
+              ) : (
+                <>
+                  <Key className="w-4 h-4 text-amber-400" />
+                  <span>Conectar com {name} (Login OAuth2)</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pt-0.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <span className="truncate">Escopos: <code>{scopeDescription}</code></span>
+        </div>
+      </div>
+
+      {/* Grade de Credenciais da API: Client ID e Client Secret */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        {/* Campo Client ID ou App ID */}
+        <div className="space-y-1">
+          <label className="block text-[11px] font-bold text-slate-700 truncate">
+            {clientIdLabel}
+          </label>
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500">
+            <input
+              type="text"
+              value={clientId}
+              onChange={(e) => onUpdateClientId(e.target.value)}
+              placeholder="Digite o Client ID ou App ID"
+              className="w-full bg-transparent text-xs font-mono text-slate-800 focus:outline-none min-w-0"
+            />
+            <button
+              type="button"
+              onClick={() => copyVal('clientId', clientId)}
+              className="p-1 hover:bg-slate-200 text-slate-500 rounded transition shrink-0 cursor-pointer"
+              title="Copiar Client ID"
+            >
+              {copiedKey === 'clientId' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Campo Client Secret ou App Secret */}
+        <div className="space-y-1">
+          <label className="block text-[11px] font-bold text-slate-700 truncate">
+            {clientSecretLabel}
+          </label>
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500">
+            <input
+              type={showSecret ? 'text' : 'password'}
+              value={clientSecret}
+              onChange={(e) => onUpdateClientSecret(e.target.value)}
+              placeholder="Digite o Client Secret ou App Secret"
+              className="w-full bg-transparent text-xs font-mono text-slate-800 focus:outline-none min-w-0"
+            />
+            <button
+              type="button"
+              onClick={() => setShowSecret(!showSecret)}
+              className="p-1 hover:bg-slate-200 text-slate-500 rounded transition shrink-0 cursor-pointer"
+              title={showSecret ? 'Ocultar Secret' : 'Revelar Secret'}
+            >
+              {showSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => copyVal('clientSecret', clientSecret)}
+              className="p-1 hover:bg-slate-200 text-slate-500 rounded transition shrink-0 cursor-pointer"
+              title="Copiar Client Secret"
+            >
+              {copiedKey === 'clientSecret' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Grade de Ingestão: URL Servidor RTMPS ou Webhook e Stream Key */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        {/* Campo URL Servidor RTMPS ou Webhook URL direta */}
+        <div className="space-y-1">
+          <label className="block text-[11px] font-bold text-slate-700 truncate">
+            {serverUrlLabel}
+          </label>
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500">
+            <input
+              type="text"
+              value={serverUrl}
+              onChange={(e) => onUpdateServerUrl(e.target.value)}
+              placeholder="rtmps://... ou webhook url"
+              className="w-full bg-transparent text-xs font-mono text-slate-800 focus:outline-none min-w-0"
+            />
+            <button
+              type="button"
+              onClick={() => copyVal('serverUrl', serverUrl)}
+              className="p-1 hover:bg-slate-200 text-slate-500 rounded transition shrink-0 cursor-pointer"
+              title="Copiar URL"
+            >
+              {copiedKey === 'serverUrl' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Campo Stream Key (Chave de Transmissão) */}
+        <div className="space-y-1">
+          <label className="block text-[11px] font-bold text-slate-700 truncate">
+            {streamKeyLabel}
+          </label>
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500">
+            <input
+              type={showKey ? 'text' : 'password'}
+              value={streamKey}
+              onChange={(e) => onUpdateStreamKey(e.target.value)}
+              placeholder="Digite a Stream Key"
+              className="w-full bg-transparent text-xs font-mono text-slate-800 focus:outline-none min-w-0"
+            />
+            <button
+              type="button"
+              onClick={() => setShowKey(!showKey)}
+              className="p-1 hover:bg-slate-200 text-slate-500 rounded transition shrink-0 cursor-pointer"
+              title={showKey ? 'Ocultar Chave' : 'Revelar Chave'}
+            >
+              {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => copyVal('streamKey', streamKey)}
+              className="p-1 hover:bg-slate-200 text-slate-500 rounded transition shrink-0 cursor-pointer"
+              title="Copiar Stream Key"
+            >
+              {copiedKey === 'streamKey' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {extraDetails}
+
+      {/* Barra de Ações: Injetar no OBS, Cópia Cruzada e Link Oficial */}
+      <div className="flex items-center flex-wrap gap-2 pt-2 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={onApplyToOBS}
+          className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+          title={`Injetar ${name} diretamente nas configurações do OBS`}
+        >
+          <Zap className="w-3.5 h-3.5 text-amber-300" />
+          <span>Injetar no OBS Studio</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onCrossCopy}
+          className="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+          title="Cópia Cruzada: Replicar para Multi-RTMP"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Cópia Cruzada</span>
+        </button>
+
+        <a
+          href={devPortalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition flex items-center gap-1 shrink-0"
+          title={devPortalLabel}
+        >
+          <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+          <span className="text-[11px] hidden md:inline">{devPortalLabel}</span>
+        </a>
+      </div>
+
+      {/* Feedback de Sucesso */}
+      {successMessage && (
+        <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="truncate">{successMessage}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const LoginsTab: React.FC<LoginsTabProps> = ({
+  lang = "pt",
   isVirtualCamActive = false,
   onToggleVirtualCam,
   onApplyYouTubeKeyToOBS,
@@ -228,7 +576,15 @@ export const LoginsTab: React.FC<LoginsTabProps> = ({
   const [profiles, setProfiles] = useState<StreamAccountProfile[]>(() => {
     try {
       const saved = localStorage.getItem('central_hub_stream_profiles');
-      return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((p: StreamAccountProfile) => ({
+          ...p,
+          streamKey: p.streamKey ? p.streamKey.replace(/fasepa/gi, 'wpstream') : p.streamKey,
+          channelName: p.channelName ? p.channelName.replace(/fasepa\.pa\.gov\.br/gi, 'portal.wpstream.net') : p.channelName,
+        }));
+      }
+      return DEFAULT_PROFILES;
     } catch {
       return DEFAULT_PROFILES;
     }
@@ -453,7 +809,115 @@ export const LoginsTab: React.FC<LoginsTabProps> = ({
   const [selectedOAuthTab, setSelectedOAuthTab] = useState<
     'youtube' | 'twitch' | 'facebook' | 'instagram' | 'tiktok' | 'restream' | 'zoom' | 'meet' | 'teams' | 'discord' | 'vimeo' | 'wpstream'
   >('youtube');
-  const [oauthViewMode, setOauthViewMode] = useState<'tabs' | 'all'>('tabs');
+  const [oauthViewMode, setOauthViewMode] = useState<'tabs' | 'all'>('all');
+  const [oauthFilterCategory, setOauthFilterCategory] = useState<'all' | 'social' | 'meetings' | 'enterprise'>('all');
+
+  // Estados de Credenciais de Desenvolvedor (Client ID / App ID, Client Secret / App Secret, URL RTMPS, Stream Key)
+  const [apiCredentials, setApiCredentials] = useState<Record<string, { clientId: string; clientSecret: string; serverUrl: string; streamKey: string }>>(() => {
+    const defaults = {
+      facebook: {
+        clientId: '982104928172901',
+        clientSecret: 'fb_sec_8a92b4c10e9812df87123aa',
+        serverUrl: 'rtmps://live-api-s.facebook.com:443/rtmp/',
+        streamKey: 'FB-902184-a810-bb92-cc11-3819',
+      },
+      instagram: {
+        clientId: '1784140291029384',
+        clientSecret: 'ig_sec_99120ab81c7201948ba',
+        serverUrl: 'rtmps://live-upload.instagram.com:443/rtmp/',
+        streamKey: 'live_891234710293_mX9aB8c7D6e5F4g3H2',
+      },
+      vimeo: {
+        clientId: 'vim_app_99102837',
+        clientSecret: 'vim_sec_c78912048ab12e9841',
+        serverUrl: 'rtmp://rtmp-global.cloud.vimeo.com/live',
+        streamKey: 'vimeo_live_key_77192a883e49',
+      },
+      discord: {
+        clientId: '1192837461928301928',
+        clientSecret: 'disc_sec_qW8912Ja891LmnOpQr192',
+        serverUrl: 'https://discord.com/api/webhooks/12938471029/live_token_sec_99',
+        streamKey: 'bot_token_MTI5Mzg0NzEwMjk0OTAyNzg3',
+      },
+      meet: {
+        clientId: '8910283746-hublive.apps.googleusercontent.com',
+        clientSecret: 'GOCSPX-89102ab81c7201948ba',
+        serverUrl: 'rtmp://a.rtmp.youtube.com/live2',
+        streamKey: 'meet_yt_live_sync_88291a',
+      },
+      zoom: {
+        clientId: 'ZM_OAUTH_CLIENT_991823a8',
+        clientSecret: 'zm_sec_89102ab81c7201948ba',
+        serverUrl: 'rtmp://live-stream.zoom.us/live/',
+        streamKey: 'zoom_live_key_991823a8b',
+      },
+      youtube: {
+        clientId: '77291038472-ytlive.apps.googleusercontent.com',
+        clientSecret: 'GOCSPX-yt_sec_109283741123',
+        serverUrl: 'rtmp://a.rtmp.youtube.com/live2',
+        streamKey: 'cgwr-kmv8-11fh-aaws-a51r',
+      },
+      twitch: {
+        clientId: 'tw_client_88319203_xYzK9',
+        clientSecret: 'tw_sec_99182aaLMNOP192',
+        serverUrl: 'rtmp://live.twitch.tv/app',
+        streamKey: 'live_88319203_xYzK9182aaLMNOP192',
+      },
+      tiktok: {
+        clientId: 'aw77192a883e49tt',
+        clientSecret: 'tt_sec_89123_a9b8c7d6e5',
+        serverUrl: 'rtmp://live-push.tiktok.com/live/',
+        streamKey: 'live_tt_89123_a9b8c7d6e5f4g3',
+      },
+      restream: {
+        clientId: 're_client_7729103_a910',
+        clientSecret: 're_sec_bfbc91023a9',
+        serverUrl: 'rtmp://live.restream.io/live',
+        streamKey: 're_7729103_a910bfbc91023a9',
+      },
+      teams: {
+        clientId: '89102837-1234-4567-89ab-cdef01234567',
+        clientSecret: 'ms_sec_teams_991823a8b',
+        serverUrl: 'rtmp://in.teams.microsoft.com/live/',
+        streamKey: 'teams_rtmp_in_key_44912aa98c',
+      },
+      wpstream: {
+        clientId: '104',
+        clientSecret: 'wp_sec_app_key_88192a',
+        serverUrl: 'rtmp://live.wpstream.net/show',
+        streamKey: 'wp_104_live_key_582',
+      }
+    };
+    try {
+      const saved = localStorage.getItem('central_hub_platform_api_creds');
+      return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+    } catch {
+      return defaults;
+    }
+  });
+
+  // Toggles de visibilidade de Secret e Stream Key (olho aberto / fechado)
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
+  const toggleSecretVisibility = (fieldId: string) => {
+    setVisibleSecrets(prev => ({ ...prev, [fieldId]: !prev[fieldId] }));
+  };
+
+  const handleUpdateCredential = (platform: string, field: 'clientId' | 'clientSecret' | 'serverUrl' | 'streamKey', value: string) => {
+    setApiCredentials(prev => {
+      const current = prev[platform] || { clientId: '', clientSecret: '', serverUrl: '', streamKey: '' };
+      const updated = {
+        ...prev,
+        [platform]: {
+          ...current,
+          [field]: value
+        }
+      };
+      try {
+        localStorage.setItem('central_hub_platform_api_creds', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
 
   // New Profile Form State
   const [isAddingProfile, setIsAddingProfile] = useState(false);
@@ -464,7 +928,7 @@ export const LoginsTab: React.FC<LoginsTabProps> = ({
   const [newEmail, setNewEmail] = useState('');
 
   // WPStream REST API Form State
-  const [wpUrl, setWpUrl] = useState('https://fasepa.pa.gov.br');
+  const [wpUrl, setWpUrl] = useState('https://portal.wpstream.net');
   const [wpUser, setWpUser] = useState('admin_transmissao');
   const [wpPass, setWpPass] = useState('••••••••••••');
   const [wpChannelId, setWpChannelId] = useState('104');
@@ -1063,7 +1527,7 @@ export const LoginsTab: React.FC<LoginsTabProps> = ({
     setWpSuccessMessage(null);
     setTimeout(() => {
       setIsWpLoading(false);
-      const generatedKey = `wp_fasepa_${wpChannelId}_live_key_${Math.floor(100 + Math.random() * 900)}`;
+      const generatedKey = `wp_${wpChannelId}_live_key_${Math.floor(100 + Math.random() * 900)}`;
       const serverUrl = 'rtmp://live.wpstream.net/show';
 
       // Update or add profile
@@ -1194,8 +1658,329 @@ export const LoginsTab: React.FC<LoginsTabProps> = ({
       icon: <Globe className="w-3.5 h-3.5 text-white" />,
       color: 'bg-indigo-600',
       connected: true,
-      account: `${wpUrl.replace('https://', '')} (#${wpChannelId})`,
+      account: `${(wpUrl.includes('fasepa') ? 'portal.wpstream.net' : wpUrl.replace('https://', '').replace('http://', ''))} (#${wpChannelId})`,
     },
+  ];
+
+  const handleApplyPlatformToOBS = (platformName: string, serverUrl: string, streamKey: string) => {
+    if (onKeySelected) {
+      onKeySelected(streamKey, platformName);
+    }
+    if (onApplyCustomProfileToOBS) {
+      onApplyCustomProfileToOBS(platformName, serverUrl, streamKey);
+    } else {
+      onApplyYouTubeKeyToOBS(streamKey);
+    }
+  };
+
+  const handleCrossCopyPlatform = (sourceName: string, serverUrl: string, streamKey: string) => {
+    handleExecuteCrossStreamCopy(sourceName, serverUrl, streamKey);
+  };
+
+  const platformBlocks: PlatformBlockItem[] = [
+    {
+      id: 'youtube',
+      name: 'YouTube Live - Canal Principal',
+      subtitle: 'Google Identity & YouTube Live Streaming API v3',
+      icon: <YouTubeIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-red-600 via-rose-600 to-red-700',
+      badgeLabel: 'Google OAuth2',
+      isConnected: isYouTubeConnected,
+      isAuthenticating: isYouTubeAuthenticating,
+      onConnect: handleConnectYouTubeOAuth2,
+      onDisconnect: handleDisconnectYouTube,
+      clientId: apiCredentials.youtube.clientId,
+      clientIdLabel: 'Client ID Google (YouTube API):',
+      clientSecret: apiCredentials.youtube.clientSecret,
+      clientSecretLabel: 'Client Secret Google Console:',
+      serverUrl: apiCredentials.youtube.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP YouTube:',
+      streamKey: apiCredentials.youtube.streamKey,
+      streamKeyLabel: 'Chave de Transmissão YouTube Live:',
+      devPortalUrl: 'https://studio.youtube.com/channel/live',
+      devPortalLabel: 'YouTube Studio Live',
+      scopeDescription: 'https://www.googleapis.com/auth/youtube.force-ssl',
+      successMessage: youtubeSuccessMsg,
+    },
+    {
+      id: 'twitch',
+      name: 'Twitch TV / Transmissão Gamer',
+      subtitle: 'Twitch Helix API & Broadcaster Ingest Protocol',
+      icon: <TwitchIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-purple-600 via-violet-600 to-indigo-700',
+      badgeLabel: 'Twitch Helix API',
+      isConnected: isTwitchConnected,
+      isAuthenticating: isTwitchAuthenticating,
+      onConnect: handleConnectTwitchOAuth2,
+      onDisconnect: handleDisconnectTwitch,
+      clientId: apiCredentials.twitch.clientId,
+      clientIdLabel: 'Client ID Twitch Developer Console:',
+      clientSecret: apiCredentials.twitch.clientSecret,
+      clientSecretLabel: 'Client Secret / OAuth Token Twitch:',
+      serverUrl: apiCredentials.twitch.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP Twitch:',
+      streamKey: apiCredentials.twitch.streamKey,
+      streamKeyLabel: 'Chave de Transmissão (Stream Key) Twitch:',
+      devPortalUrl: 'https://dev.twitch.tv/console/apps',
+      devPortalLabel: 'Twitch Dev Console',
+      scopeDescription: 'channel:manage:broadcast, user:read:email',
+      successMessage: twitchSuccessMsg,
+    },
+    {
+      id: 'facebook',
+      name: 'Facebook Live (Páginas & Grupos)',
+      subtitle: 'Meta Graph API v19.0 (RTMPS Seguro Porta 443)',
+      icon: <FacebookIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-blue-600 via-sky-600 to-indigo-700',
+      badgeLabel: 'Meta App Developer',
+      isConnected: isFacebookConnected,
+      isAuthenticating: isFacebookAuthenticating,
+      onConnect: handleConnectFacebookOAuth2,
+      onDisconnect: handleDisconnectFacebook,
+      clientId: apiCredentials.facebook.clientId,
+      clientIdLabel: 'App ID / Client ID Facebook:',
+      clientSecret: apiCredentials.facebook.clientSecret,
+      clientSecretLabel: 'App Secret / Client Secret Facebook:',
+      serverUrl: apiCredentials.facebook.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMPS Facebook:',
+      streamKey: apiCredentials.facebook.streamKey,
+      streamKeyLabel: 'Chave de Transmissão (Stream Key) Facebook:',
+      devPortalUrl: 'https://developers.facebook.com/apps',
+      devPortalLabel: 'Meta for Developers',
+      scopeDescription: 'pages_show_list, publish_video, pages_read_engagement',
+      successMessage: facebookSuccessMsg,
+    },
+    {
+      id: 'instagram',
+      name: 'Instagram Live Producer',
+      subtitle: 'Meta Graph API / Instagram Professional Live',
+      icon: <InstagramIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-amber-500 via-rose-600 to-purple-600',
+      badgeLabel: 'Instagram Live Producer',
+      isConnected: isInstagramConnected,
+      isAuthenticating: isInstagramAuthenticating,
+      onConnect: handleConnectInstagramOAuth2,
+      onDisconnect: handleDisconnectInstagram,
+      clientId: apiCredentials.instagram.clientId,
+      clientIdLabel: 'Instagram App ID / Client ID:',
+      clientSecret: apiCredentials.instagram.clientSecret,
+      clientSecretLabel: 'Instagram App Secret / Client Secret:',
+      serverUrl: apiCredentials.instagram.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMPS Instagram:',
+      streamKey: apiCredentials.instagram.streamKey,
+      streamKeyLabel: 'Stream Key Instagram Live Producer:',
+      devPortalUrl: 'https://www.instagram.com/live/producer',
+      devPortalLabel: 'Instagram Live Producer',
+      scopeDescription: 'instagram_basic, live_video, instagram_manage_messages',
+      successMessage: instagramSuccessMsg,
+    },
+    {
+      id: 'tiktok',
+      name: 'TikTok Live (Vertical 9:16)',
+      subtitle: 'TikTok Developer Live API & Stream Key Generator',
+      icon: <TikTokIcon className="w-5 h-5 text-rose-400" />,
+      headerGradient: 'from-slate-900 via-rose-950 to-slate-900',
+      badgeLabel: 'TikTok Developer API',
+      isConnected: isTikTokConnected,
+      isAuthenticating: isTikTokAuthenticating,
+      onConnect: handleConnectTikTokOAuth2,
+      onDisconnect: handleDisconnectTikTok,
+      clientId: apiCredentials.tiktok.clientId,
+      clientIdLabel: 'Client Key / App ID TikTok Developer:',
+      clientSecret: apiCredentials.tiktok.clientSecret,
+      clientSecretLabel: 'Client Secret TikTok Developer:',
+      serverUrl: apiCredentials.tiktok.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP TikTok Live:',
+      streamKey: apiCredentials.tiktok.streamKey,
+      streamKeyLabel: 'Stream Key TikTok Live:',
+      devPortalUrl: 'https://developers.tiktok.com/',
+      devPortalLabel: 'TikTok for Developers',
+      scopeDescription: 'live.creator.read, live.creator.write',
+      successMessage: tiktokSuccessMsg,
+    },
+    {
+      id: 'restream',
+      name: 'Restream.io (Multi-Stream Nuvem Grátis)',
+      subtitle: 'Restream Cloud Broadcaster API (Transmissão Simultânea)',
+      icon: <RestreamIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-orange-500 via-amber-600 to-red-600',
+      badgeLabel: 'Restream Cloud API',
+      isConnected: isRestreamConnected,
+      isAuthenticating: isRestreamAuthenticating,
+      onConnect: handleConnectRestreamOAuth2,
+      onDisconnect: handleDisconnectRestream,
+      clientId: apiCredentials.restream.clientId,
+      clientIdLabel: 'Client ID Restream Developers:',
+      clientSecret: apiCredentials.restream.clientSecret,
+      clientSecretLabel: 'Client Secret Restream API:',
+      serverUrl: apiCredentials.restream.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP Restream.io:',
+      streamKey: apiCredentials.restream.streamKey,
+      streamKeyLabel: 'Stream Key Restream Multi-Cast:',
+      devPortalUrl: 'https://restream.io/settings/streaming-setup',
+      devPortalLabel: 'Restream Ingest Setup',
+      scopeDescription: 'stream.read, stream.write, channels.manage',
+      successMessage: restreamSuccessMsg,
+    },
+    {
+      id: 'zoom',
+      name: 'Zoom Video Webinars & Meetings',
+      subtitle: 'Zoom App Marketplace OAuth & RTMP Ingest Service',
+      icon: <ZoomIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-[#2D8CFF] via-blue-600 to-indigo-700',
+      badgeLabel: 'Zoom Marketplace OAuth',
+      isConnected: isZoomConnected,
+      isAuthenticating: isZoomAuthenticating,
+      onConnect: handleConnectZoomOAuth2,
+      onDisconnect: handleDisconnectZoom,
+      clientId: apiCredentials.zoom.clientId,
+      clientIdLabel: 'Client ID / API Key Zoom:',
+      clientSecret: apiCredentials.zoom.clientSecret,
+      clientSecretLabel: 'Client Secret Zoom Marketplace:',
+      serverUrl: apiCredentials.zoom.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP Zoom Live:',
+      streamKey: apiCredentials.zoom.streamKey,
+      streamKeyLabel: 'Stream Key Zoom Webinar / Meeting:',
+      devPortalUrl: 'https://marketplace.zoom.us/develop/create',
+      devPortalLabel: 'Zoom App Marketplace',
+      scopeDescription: 'webinar:read:admin, meeting:write:admin',
+      successMessage: zoomSuccessMsg,
+    },
+    {
+      id: 'meet',
+      name: 'Google Meet & Workspace',
+      subtitle: 'Google Identity & Live Stream Ingest API',
+      icon: <MeetIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-emerald-600 via-teal-600 to-cyan-700',
+      badgeLabel: 'Google Workspace OAuth2',
+      isConnected: isMeetConnected,
+      isAuthenticating: isMeetAuthenticating,
+      onConnect: handleConnectMeetOAuth2,
+      onDisconnect: handleDisconnectMeet,
+      clientId: apiCredentials.meet.clientId,
+      clientIdLabel: 'Client ID Google Workspace / Meet:',
+      clientSecret: apiCredentials.meet.clientSecret,
+      clientSecretLabel: 'Client Secret Google Cloud Console:',
+      serverUrl: apiCredentials.meet.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP Google Meet:',
+      streamKey: apiCredentials.meet.streamKey,
+      streamKeyLabel: 'Chave de Transmissão (Stream Key) Google Meet:',
+      devPortalUrl: 'https://console.cloud.google.com/apis/credentials',
+      devPortalLabel: 'Google Cloud Console',
+      scopeDescription: 'https://www.googleapis.com/auth/meetings.space.readonly',
+      successMessage: meetSuccessMsg,
+    },
+    {
+      id: 'teams',
+      name: 'Microsoft Teams (Town Hall & Live Events)',
+      subtitle: 'Microsoft Graph API & RTMP-In Direct Protocol',
+      icon: <TeamsIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-[#5059C9] via-indigo-600 to-blue-700',
+      badgeLabel: 'Azure Active Directory',
+      isConnected: isTeamsConnected,
+      isAuthenticating: isTeamsAuthenticating,
+      onConnect: handleConnectTeamsOAuth2,
+      onDisconnect: handleDisconnectTeams,
+      clientId: apiCredentials.teams.clientId,
+      clientIdLabel: 'Azure App (Client) ID Microsoft 365:',
+      clientSecret: apiCredentials.teams.clientSecret,
+      clientSecretLabel: 'Client Secret Azure Portal:',
+      serverUrl: apiCredentials.teams.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP Microsoft Teams (RTMP-In):',
+      streamKey: apiCredentials.teams.streamKey,
+      streamKeyLabel: 'Stream Key Teams Town Hall / Event:',
+      devPortalUrl: 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
+      devPortalLabel: 'Azure AD App Registrations',
+      scopeDescription: 'OnlineMeetings.ReadWrite, LiveEvents.Manage',
+      successMessage: teamsSuccessMsg,
+    },
+    {
+      id: 'discord',
+      name: 'Discord Live Webhook & Notifier',
+      subtitle: 'Discord Developer Portal / Webhook Alert de Transmissão',
+      icon: <DiscordIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-[#5865F2] via-indigo-600 to-purple-700',
+      badgeLabel: 'Discord Webhook API',
+      isConnected: isDiscordConnected,
+      isAuthenticating: isDiscordAuthenticating,
+      onConnect: handleConnectDiscordOAuth2,
+      onDisconnect: handleDisconnectDiscord,
+      clientId: apiCredentials.discord.clientId,
+      clientIdLabel: 'Application (Client) ID Discord:',
+      clientSecret: apiCredentials.discord.clientSecret,
+      clientSecretLabel: 'Client Secret / Bot Token Discord:',
+      serverUrl: apiCredentials.discord.serverUrl,
+      serverUrlLabel: 'Webhook URL Direta (Canal Discord):',
+      streamKey: apiCredentials.discord.streamKey,
+      streamKeyLabel: 'Bot Token / Chave Secreta de Alerta:',
+      devPortalUrl: 'https://discord.com/developers/applications',
+      devPortalLabel: 'Discord Developer Portal',
+      scopeDescription: 'webhook.incoming, bot, applications.commands',
+      successMessage: discordSuccessMsg,
+      extraDetails: (
+        <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center justify-between gap-2">
+          <span className="text-[11px] text-indigo-900 font-semibold truncate">
+            Disparar anúncio de live imediatamente no Discord:
+          </span>
+          <button
+            type="button"
+            onClick={handleSendDiscordAlert}
+            disabled={isSendingDiscordAlert}
+            className="px-3 py-1 bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-[11px] rounded transition shadow-xs shrink-0 cursor-pointer"
+          >
+            {isSendingDiscordAlert ? 'Enviando...' : 'Enviar Alerta'}
+          </button>
+        </div>
+      )
+    },
+    {
+      id: 'vimeo',
+      name: 'Vimeo Live Corporativo',
+      subtitle: 'Vimeo Cloud Ingest & Enterprise Event API',
+      icon: <VimeoIcon className="w-5 h-5 text-white" />,
+      headerGradient: 'from-[#1AB7EA] via-sky-600 to-blue-700',
+      badgeLabel: 'Vimeo Developer API',
+      isConnected: isVimeoConnected,
+      isAuthenticating: isVimeoAuthenticating,
+      onConnect: handleConnectVimeoOAuth2,
+      onDisconnect: handleDisconnectVimeo,
+      clientId: apiCredentials.vimeo.clientId,
+      clientIdLabel: 'Vimeo App ID / Client ID:',
+      clientSecret: apiCredentials.vimeo.clientSecret,
+      clientSecretLabel: 'Vimeo Client Secret / Token:',
+      serverUrl: apiCredentials.vimeo.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP Vimeo:',
+      streamKey: apiCredentials.vimeo.streamKey,
+      streamKeyLabel: 'Stream Key Vimeo Live:',
+      devPortalUrl: 'https://developer.vimeo.com/apps',
+      devPortalLabel: 'Vimeo Developer Apps',
+      scopeDescription: 'private, create, edit, video_files',
+      successMessage: vimeoSuccessMsg,
+    },
+    {
+      id: 'wpstream',
+      name: 'Portal Institucional WPStream (WordPress)',
+      subtitle: 'WordPress REST API & WPStream Streaming Plugin',
+      icon: <Globe className="w-5 h-5 text-white" />,
+      headerGradient: 'from-indigo-600 via-blue-600 to-sky-700',
+      badgeLabel: 'WordPress REST API',
+      isConnected: true,
+      isAuthenticating: isWpLoading,
+      onConnect: () => handleAuthWPStream({ preventDefault: () => {} } as any),
+      onDisconnect: () => {},
+      clientId: apiCredentials.wpstream.clientId,
+      clientIdLabel: 'ID do Canal WPStream (WordPress):',
+      clientSecret: apiCredentials.wpstream.clientSecret,
+      clientSecretLabel: 'Application Password / Senha API WordPress:',
+      serverUrl: apiCredentials.wpstream.serverUrl,
+      serverUrlLabel: 'URL Servidor RTMP WPStream:',
+      streamKey: apiCredentials.wpstream.streamKey,
+      streamKeyLabel: 'Chave de Transmissão (Stream Key) WPStream:',
+      devPortalUrl: 'https://wpstream.net/documentation/',
+      devPortalLabel: 'Documentação WPStream',
+      scopeDescription: 'wp-json/wpstream/v1/channels',
+      successMessage: wpSuccessMessage,
+    }
   ];
 
   const totalConnectedCount = oauthStatusLeds.filter((item) => item.connected).length;
@@ -1382,6 +2167,14 @@ export const LoginsTab: React.FC<LoginsTabProps> = ({
           </div>
         </div>
       </div>
+
+      {/* BLOCOS DESAGRUPADOS DE INTEGRAÇÕES OAUTH2 & APIS */}
+      <UnbundledOAuthBlocks lang={lang}
+        blocks={platformBlocks}
+        onUpdateCredential={handleUpdateCredential}
+        onApplyToOBS={handleApplyPlatformToOBS}
+        onCrossCopy={handleCrossCopyPlatform}
+      />
 
       {/* Main Grid: Saved Profiles List (7 Cols) & Instagram OAuth2 / WPStream (5 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

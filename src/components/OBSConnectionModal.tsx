@@ -18,7 +18,7 @@ import {
   Globe, 
   Laptop
 } from 'lucide-react';
-import { OBSConnectionConfig, StudioProfile, ConnectionMode } from '../types';
+import { OBSConnectionConfig, StudioProfile, ConnectionMode, SoftwareType } from '../types';
 import { ProfileManager } from '../services/profileManager';
 
 interface OBSConnectionModalProps {
@@ -30,6 +30,7 @@ interface OBSConnectionModalProps {
   onConnect: (profile: StudioProfile) => void;
   onDisconnect: () => void;
   onTestConnection: (profile: StudioProfile) => Promise<{ success: boolean; message: string }>;
+  onNavigateToMultiSoftware?: () => void;
 }
 
 export const OBSConnectionModal: React.FC<OBSConnectionModalProps> = ({
@@ -41,9 +42,11 @@ export const OBSConnectionModal: React.FC<OBSConnectionModalProps> = ({
   onConnect,
   onDisconnect,
   onTestConnection,
+  onNavigateToMultiSoftware,
 }) => {
   const [selectedProfileId, setSelectedProfileId] = useState<string>(config.activeProfileId || profiles[0]?.id || 'profile-local-direct');
   const [profileName, setProfileName] = useState('');
+  const [softwareType, setSoftwareType] = useState<SoftwareType>('obs');
   const [mode, setMode] = useState<ConnectionMode>('direct');
   const [host, setHost] = useState('localhost');
   const [port, setPort] = useState(4455);
@@ -59,6 +62,7 @@ export const OBSConnectionModal: React.FC<OBSConnectionModalProps> = ({
     const prof = profiles.find((p) => p.id === selectedProfileId) || profiles[0];
     if (prof) {
       setProfileName(prof.name);
+      setSoftwareType(prof.softwareType || 'obs');
       setMode(prof.mode);
       setHost(prof.host);
       setPort(prof.port);
@@ -74,6 +78,7 @@ export const OBSConnectionModal: React.FC<OBSConnectionModalProps> = ({
   const currentProfileData: StudioProfile = {
     id: selectedProfileId,
     name: profileName,
+    softwareType,
     mode,
     host,
     port: Number(port),
@@ -81,6 +86,16 @@ export const OBSConnectionModal: React.FC<OBSConnectionModalProps> = ({
     autoConnect,
     description,
     lastUsed: new Date().toISOString(),
+  };
+
+  const handleSoftwareChange = (newSoft: SoftwareType) => {
+    setSoftwareType(newSoft);
+    if (newSoft === 'obs' || newSoft === 'prism') setPort(4455);
+    else if (newSoft === 'vmix') setPort(8088);
+    else if (newSoft === 'streamlabs') setPort(59650);
+    else if (newSoft === 'wirecast') setPort(8080);
+    else if (newSoft === 'meld') setPort(8989);
+    else if (newSoft === 'streamerbot') setPort(8080);
   };
 
   const handleCreateNewProfile = () => {
@@ -220,6 +235,59 @@ export const OBSConnectionModal: React.FC<OBSConnectionModalProps> = ({
                 );
               })}
             </div>
+          </div>
+
+          {/* Software Engine Selection */}
+          <div className="space-y-1.5">
+            <label className="block font-semibold text-slate-700">Software / Motor de Transmissão Suportado</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: 'obs', name: 'OBS Studio', port: 4455, desc: 'WebSocket v5 Oficial' },
+                { id: 'vmix', name: 'vMix HD/4K', port: 8088, desc: 'TCP API / Web Controller' },
+                { id: 'streamlabs', name: 'Streamlabs Desktop', port: 59650, desc: 'IPC WebSocket' },
+                { id: 'prism', name: 'PRISM Live Studio', port: 4455, desc: 'WebSocket Engine' },
+                { id: 'wirecast', name: 'Telestream Wirecast', port: 8080, desc: 'REST Controller' },
+                { id: 'meld', name: 'Meld Studio', port: 8989, desc: 'Remote WebSocket' },
+                { id: 'streamerbot', name: 'Streamer.bot', port: 8080, desc: 'WebSocket Server' },
+              ].map((sw) => (
+                <button
+                  key={sw.id}
+                  type="button"
+                  onClick={() => handleSoftwareChange(sw.id as any)}
+                  className={`p-2 rounded-lg border text-left transition ${
+                    softwareType === sw.id
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
+                >
+                  <span className="font-bold text-xs block">{sw.name}</span>
+                  <span className={`text-[10px] ${softwareType === sw.id ? 'text-blue-100' : 'text-slate-500'}`}>
+                    Porta {sw.port}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {softwareType !== 'obs' && onNavigateToMultiSoftware && (
+              <div className="mt-2.5 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between gap-3 animate-in fade-in">
+                <div className="text-xs text-blue-900">
+                  <span className="font-bold">Mesa de Controle Multi-Software Pronta!</span>
+                  <p className="text-[11px] text-blue-700 mt-0.5">
+                    Você pode operar o {softwareType.toUpperCase()} com uma mesa de corte dedicada, inputs e transições.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onNavigateToMultiSoftware();
+                  }}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition shadow-xs shrink-0 cursor-pointer"
+                >
+                  Abrir Mesa {softwareType.toUpperCase()} ➔
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Connection Mode Tabs */}
