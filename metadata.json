@@ -1,0 +1,6 @@
+{
+  "name": "Central Hub OBS - Controle de Transmissão",
+  "description": "Painel de controle profissional para transmissões OBS Studio com suporte a Multi-RTMP, VDO.Ninja, Aitum Vertical, automação de cenas e mixer multimídia.",
+  "permissions": [],
+  "capabilities": []
+}

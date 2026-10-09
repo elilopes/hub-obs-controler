@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  }
+}
+
+/* Custom animations for live indicator and ticker */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.95); }
+}
+
+.animate-live {
+  animation: live-pulse 1.6s infinite ease-in-out;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 14s linear infinite;
+}
+
+/* RGB Rainbow border animation */
+@keyframes rgb-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-rgb-glow {
+  background: linear-gradient(90deg, #ff0055, #ff7700, #ffdd00, #00ff66, #00bbff, #aa00ff, #ff0055);
+  background-size: 300% 300%;
+  animation: rgb-flow 4s ease infinite;
+}
+
+/* Hazard diagonal stripes */
+.bg-hazard-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(234, 179, 8, 0.25),
+    rgba(234, 179, 8, 0.25) 12px,
+    rgba(15, 23, 42, 0.85) 12px,
+    rgba(15, 23, 42, 0.85) 24px
+  );
+}
+
+.bg-hazard-stripes-danger {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(220, 38, 38, 0.35),
+    rgba(220, 38, 38, 0.35) 12px,
+    rgba(15, 23, 42, 0.85) 12px,
+    rgba(15, 23, 42, 0.85) 24px
+  );
+}
+
+/* Text glow effects */
+.text-neon-glow {
+  text-shadow: 0 0 6px currentColor, 0 0 16px currentColor, 0 0 28px currentColor;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #fff7c2 0%, #facc15 50%, #b45309 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.text-3d-shadow {
+  text-shadow: 
+    1px 1px 0px #0f172a,
+    2px 2px 0px #0f172a,
+    3px 3px 0px #0f172a,
+    4px 4px 6px rgba(0,0,0,0.9);
+}
+
+.text-glitch {
+  text-shadow: 
+    2px 0 #00f0ff,
+    -2px 0 #ff0055;
+  letter-spacing: 0.08em;
+}
+
+@keyframes strobe-flash {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
+.animate-strobe {
+  animation: strobe-flash 0.5s infinite;
+}
